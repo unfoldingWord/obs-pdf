@@ -1,3 +1,6 @@
 .idea/
 venv/
 obs-pdf.iml
+output/
+!output/.gitkeep
+__pycache__/

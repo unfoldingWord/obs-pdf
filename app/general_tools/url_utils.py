@@ -68,6 +68,14 @@ def get_languages():
     return json.loads(get_url(url))
 
 
+def get_catalog():
+    """
+    Returns the api v3 catalog
+    """
+    url = 'https://api.door43.org/v3/catalog.json'
+    return json.loads(get_url(url))
+
+
 def join_url_parts(*args):
     """
     Joins a list of segments into a URL-like string
