@@ -19,3 +19,14 @@ cd /opt && git clone https://github.com/unfoldingWord-dev/obs-pdf.git
 cd /opt/obs-pdf && pip3 install -r requirements.txt
 cd /opt/obs-pdf && python3 -m app.pdf_from_dcs --lang-code=en
 ```
+
+### Docker commands
+```bash
+docker run --name dcs-context -d --rm --workdir /opt -i -t dcs-context
+docker exec dcs-context git clone https://github.com/unfoldingWord-dev/obs-pdf.git
+docker exec -i dcs-context bash -c "cd /opt/obs-pdf && git fetch --all && git checkout origin/develop"
+docker exec -i dcs-context bash -c "cd /opt/obs-pdf && pip3 install -r requirements.txt"
+docker exec -i dcs-context bash -c "cd /opt/obs-pdf && python3 -m app.pdf_from_dcs --lang-code=en"
+docker cp dcs-context:/opt/obs-pdf/output /home/phil/docker-output
+docker stop dcs-context
+```
