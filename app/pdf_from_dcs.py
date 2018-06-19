@@ -208,7 +208,7 @@ def create_pdf(obs_obj):
 
         try:
             std_out = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, cwd=out_dir)
-            std_out = re.sub(r'\n\n+', '\n', std_out.decode(sys.getfilesystemencoding()), flags=re.MULTILINE)
+            std_out = re.sub(r'\n\n+', '\n', std_out.decode('utf-8'), flags=re.MULTILINE)
             write_file(out_log, std_out)
 
             err_lines = re.findall(r'(^tex error.+)\n?', std_out, flags=re.MULTILINE)
@@ -221,7 +221,7 @@ def create_pdf(obs_obj):
         except subprocess.CalledProcessError as e:
 
             # find the tex error lines
-            std_out = e.stdout.decode(sys.getfilesystemencoding())
+            std_out = e.stdout.decode('utf-8')
             std_out = re.sub(r'\n\n+', '\n', std_out, flags=re.MULTILINE)
             err_lines = re.findall(r'(^tex error.+)\n?', std_out, flags=re.MULTILINE)
 
