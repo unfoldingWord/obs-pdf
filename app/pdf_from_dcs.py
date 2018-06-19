@@ -1,6 +1,6 @@
 import argparse
 import codecs
-import re
+import regex as re
 import shutil
 import datetime
 import subprocess

@@ -1,6 +1,6 @@
 import codecs
 import os
-import re
+import regex as re
 # import shutil
 import sys
 # import time

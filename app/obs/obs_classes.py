@@ -1,5 +1,5 @@
-import codecs
-import re
+# import codecs
+import regex as re
 from datetime import datetime
 import os
 from json import JSONEncoder
