@@ -1,14 +1,11 @@
-# import codecs
 import regex as re
 from datetime import datetime
 import os
 from json import JSONEncoder
-# import chapters_and_frames
-# from app.general_tools.file_utils import load_json_object
-# from app_code.util import app_utils
-# from app_code.util.languages import Language
-from app.general_tools.file_utils import load_json_object
-from app.obs import chapters_and_frames
+from typing import List
+
+from lib.general_tools.file_utils import load_json_object
+from lib.obs import chapters_and_frames
 
 
 class OBSStatus(object):
@@ -71,7 +68,7 @@ class OBSChapter(object):
             self.__dict__ = json_obj  # type: dict
 
         else:
-            self.frames = []  # type: list<dict>
+            self.frames = []  # type: List[dict]
             self.number = ''
             self.ref = ''
             self.title = ''
@@ -235,3 +232,8 @@ class OBS(object):
 class OBSEncoder(JSONEncoder):
     def default(self, o):
         return o.__dict__
+
+
+class OBSError(Exception):
+    def __init__(self, msg: str):
+        super().__init__(msg)

@@ -4,7 +4,7 @@ import os
 
 def get_app_root():
     current_dir = os.path.dirname(inspect.stack()[0][1])
-    return os.path.dirname(os.path.dirname(current_dir))
+    return os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
 
 
 def get_resources_dir():

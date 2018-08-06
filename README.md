@@ -30,3 +30,17 @@ docker exec -i dcs-context bash -c "cd /opt/obs-pdf && python3 -m app.pdf_from_d
 docker cp dcs-context:/opt/obs-pdf/output /home/phil/docker-output
 docker stop dcs-context
 ```
+
+### Python virtual environment
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Flask commands
+```bash
+cd public
+export FLASK_APP=obs-pdf.py
+flask run
+```

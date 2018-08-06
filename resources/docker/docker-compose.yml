@@ -3,4 +3,4 @@ version: '2'
 services:
   dcs:
     build: .
-    image: dcs-context
+    image: dcs-context:latest

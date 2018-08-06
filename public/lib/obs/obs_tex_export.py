@@ -1,14 +1,12 @@
 import codecs
 import os
 import regex as re
-# import shutil
 import sys
-# import time
 from string import Template
 
-from app.general_tools.app_utils import get_resources_dir
-from app.general_tools.file_utils import write_file
-from app.general_tools.url_utils import join_url_parts
+from lib.general_tools.app_utils import get_resources_dir
+from lib.general_tools.file_utils import write_file
+from lib.general_tools.url_utils import join_url_parts
 
 
 class OBSTexExport(object):
