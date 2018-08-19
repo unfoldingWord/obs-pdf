@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import os
-from flask import Flask, request
+from flask import Flask, request, send_from_directory, render_template
 
 from lib.pdf_from_dcs import PdfFromDcs
 
@@ -27,6 +27,12 @@ def pdf_from_dcs():
         f.run()
 
     return lang_code
+
+
+@app.route('/test', methods=['POST', 'GET'], strict_slashes=False)
+def test_page():
+
+    return send_from_directory(os.path.join(project_dir, 'static'), 'test_response.html')
 
 
 if __name__ == '__main__':
