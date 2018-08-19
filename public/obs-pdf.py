@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import os
-from flask import Flask, request, send_from_directory, render_template
+from flask import Flask, request, send_from_directory
 
 from lib.pdf_from_dcs import PdfFromDcs
 
