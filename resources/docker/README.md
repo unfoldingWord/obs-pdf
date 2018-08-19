@@ -12,7 +12,8 @@ sudo reboot
 ### Build the Docker container
 ```bash
 cd ~/Projects/dsm-docker
-docker build -t dcs-context - < Dockerfile
+# docker build -t dcs-context - < Dockerfile
+docker-compose build
 ```
 
 ### Show running containers
@@ -52,4 +53,13 @@ docker stop dcs-context
 ```bash
 docker rm -v 840cbddced04
 docker rmi dcs-context
+```
+
+### Remove all containers and images
+```bash
+# Delete all containers
+docker rm $(docker ps -a -q)
+
+# Delete all images
+docker rmi $(docker images -q)
 ```

@@ -4,3 +4,5 @@ services:
   dcs:
     build: .
     image: dcs-context:latest
+    ports:
+      - "8080:80"
