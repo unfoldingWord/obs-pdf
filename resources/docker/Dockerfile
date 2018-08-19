@@ -2,6 +2,10 @@ FROM nginx:latest
 
 MAINTAINER DSM
 
+# use `bash` instead of the default `sh`,
+# because we call the built-in `source` command to activate the python virtual environment
+SHELL ["/bin/bash", "-c"]
+
 # install apt-utils so the rest of the install goes more smoothly
 RUN apt-get update \
     && apt-get install -y apt-utils
@@ -51,7 +55,7 @@ RUN cd /opt && git clone --single-branch -b develop https://github.com/unfolding
     && cd /opt/obs-pdf \
     && python3 -m venv venv \
     && source venv/bin/activate \
-    && pip install --upgrade -r prerequisites.txt
+    && pip install --upgrade -r prerequisites.txt \
     && pip install -r requirements.txt
 
 # configure nginx
