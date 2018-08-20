@@ -31,6 +31,7 @@ RUN apt-get update \
         context \
         wget \
         nano \
+        systemd \
     && apt-get autoremove -y
 
 # install nodejs
@@ -63,8 +64,6 @@ RUN cd /opt && git clone --single-branch -b develop https://github.com/unfolding
 # configure nginx
 RUN rm -f /opt/obs-pdf/backup/default.conf \
     && mv /etc/nginx/conf.d/default.conf /opt/obs-pdf/backup/default.conf \
-    && ln -sf /opt/obs-pdf/config/obs-pdf.conf /etc/nginx/conf.d/obs-pdf.conf \
-    && ln -sf /opt/obs-pdf/config/obs-pdf.service /etc/nginx/conf.d \
-    && systemctl start obs_pdf \
-    && systemctl enable obs_pdf \
-    && systemctl restart nginx
+    && ln -sf /opt/obs-pdf/config/obs-pdf.conf /etc/nginx/conf.d/obs-pdf.conf
+
+ENTRYPOINT ["/opt/obs-pdf/docker-entrypoint.sh"]

@@ -51,5 +51,6 @@ flask run
 ### Run using wsgi
 ```bash
 cd public
-uwsgi --socket 0.0.0.0:5000 --protocol=http -w wsgi:app
+uwsgi --socket 0.0.0.0:5000 --protocol=http -w wsgi:app --ini ../config/obs-pdf.ini
+nginx -g "daemon off;"
 ```
