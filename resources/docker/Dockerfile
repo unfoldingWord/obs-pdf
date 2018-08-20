@@ -54,6 +54,7 @@ RUN mkdir -p /opt/obs/images \
 # install the obs-pdf app
 RUN cd /opt && git clone --single-branch -b develop https://github.com/unfoldingWord-dev/obs-pdf.git \
     && cd /opt/obs-pdf \
+    && git pull \
     && python3 -m venv venv \
     && source venv/bin/activate \
     && pip install --upgrade -r prerequisites.txt \
