@@ -10,6 +10,7 @@ pip install -r requirements.txt
 
 # start the flask app
 cd "${thisDir}/public"
-export FLASK_ENV=development
-export FLASK_APP=obs-pdf.py
-flask run --host=0.0.0.0
+#export FLASK_ENV=development
+#export FLASK_APP=obs_pdf.py
+#flask run --host=0.0.0.0
+uwsgi --socket 0.0.0.0:5000 --protocol=http -w wsgi:app

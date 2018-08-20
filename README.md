@@ -2,6 +2,9 @@
 
 #### NOTE: Python 3 Only
 
+### Helpful Docs:
+https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uwsgi-and-nginx-on-ubuntu-16-04
+
 ### Image source
 
 Unzip into /opt/obs/images
@@ -41,6 +44,12 @@ pip install -r requirements.txt
 ### Flask commands
 ```bash
 cd public
-export FLASK_APP=obs-pdf.py
+export FLASK_APP=obs_pdf.py
 flask run
+```
+
+### Run using wsgi
+```bash
+cd public
+uwsgi --socket 0.0.0.0:5000 --protocol=http -w wsgi:app
 ```

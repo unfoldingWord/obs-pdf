@@ -1,0 +1,13 @@
+[Unit]
+Description=uWSGI instance to serve obs-pdf
+After=network.target
+
+[Service]
+User=nginx
+Group=www-data
+WorkingDirectory=/opt/obs-pdf/public
+Environment="PATH=/opt/obs-pdf/venv/bin"
+ExecStart=/opt/obs-pdf/venv/bin/uwsgi --ini /opt/obs-pdf/config/obs-pdf.ini
+
+[Install]
+WantedBy=multi-user.target

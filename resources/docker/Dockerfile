@@ -30,6 +30,7 @@ RUN apt-get update \
         fonts-noto \
         context \
         wget \
+        nano \
     && apt-get autoremove -y
 
 # install nodejs
@@ -59,4 +60,10 @@ RUN cd /opt && git clone --single-branch -b develop https://github.com/unfolding
     && pip install -r requirements.txt
 
 # configure nginx
-#RUN ufw allow 'Nginx Full'
+RUN rm -f /opt/obs-pdf/backup/default.conf \
+    && mv /etc/nginx/conf.d/default.conf /opt/obs-pdf/backup/default.conf \
+    && ln -sf /opt/obs-pdf/config/obs-pdf.conf /etc/nginx/conf.d/obs-pdf.conf \
+    && ln -sf /opt/obs-pdf/config/obs-pdf.service /etc/nginx/conf.d \
+    && systemctl start obs_pdf \
+    && systemctl enable obs_pdf \
+    && systemctl restart nginx

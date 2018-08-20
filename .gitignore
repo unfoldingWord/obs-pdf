@@ -2,7 +2,10 @@
 venv/
 temp/
 obs-pdf.iml
-output/
-!output/.gitkeep
+
 __pycache__/
 *.pyc
+
+/output/*
+/backup/*
+!.gitkeep

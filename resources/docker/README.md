@@ -13,7 +13,7 @@ sudo reboot
 ```bash
 cd ~/Projects/dsm-docker
 # docker build -t dcs-context - < Dockerfile
-docker-compose build
+docker-compose build --force-rm
 ```
 
 ### Show running containers
