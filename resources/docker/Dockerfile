@@ -31,7 +31,6 @@ RUN apt-get update \
         context \
         wget \
         nano \
-        systemd \
     && apt-get autoremove -y
 
 # install nodejs
