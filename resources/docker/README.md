@@ -1,6 +1,6 @@
 # Docker Container for Building OBS PDF Files
 
-Includes Python3 and context
+Includes Python3 and ConText
 
 
 ### Add yourself to the docker group

@@ -65,4 +65,4 @@ RUN rm -f /opt/obs-pdf/backup/default.conf \
     && mv /etc/nginx/conf.d/default.conf /opt/obs-pdf/backup/default.conf \
     && ln -sf /opt/obs-pdf/config/obs-pdf.conf /etc/nginx/conf.d/obs-pdf.conf
 
-ENTRYPOINT ["/opt/obs-pdf/docker-entrypoint.sh"]
+#ENTRYPOINT ["/opt/obs-pdf/docker-entrypoint.sh"]
