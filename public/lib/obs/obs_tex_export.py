@@ -178,7 +178,7 @@ class OBSTexExport(object):
     def tex_load_snippet_file(self, xtr, entry_name):
 
         if not os.path.isdir(OBSTexExport.snippets_dir):
-            raise IOError('Path not found" {0}'.format(OBSTexExport.snippets_dir))
+            raise IOError('Path not found: {0}'.format(OBSTexExport.snippets_dir))
 
         with codecs.open(os.path.join(OBSTexExport.snippets_dir, entry_name), 'r', encoding='utf-8-sig') as in_file:
             each = in_file.readlines()

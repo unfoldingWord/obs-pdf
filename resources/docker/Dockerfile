@@ -3,11 +3,11 @@ FROM tiangolo/uwsgi-nginx-flask:python3.6
 MAINTAINER DSM
 
 # Which uWSGI .ini file should be used, to make it customizable
-ENV UWSGI_INI /app/obs_pdf/public/uwsgi.ini
+ENV UWSGI_INI /app/obs-pdf/public/uwsgi.ini
 
 # install apt-utils so the rest of the install goes more smoothly
 RUN apt-get update \
-    && apt-get dist-upgrade \
+    && apt-get dist-upgrade -y \
     && apt-get install -y apt-utils
 
 # install packages

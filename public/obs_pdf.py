@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import os
-from flask import Flask, request, send_from_directory
-
+from flask import Flask, request, send_from_directory, send_file
 from lib.pdf_from_dcs import PdfFromDcs
 
 app = Flask(__name__)
@@ -24,9 +23,9 @@ def pdf_from_dcs():
         return 'Bad Request - no lang_code', 400
 
     with PdfFromDcs(lang_code) as f:
-        f.run()
+        pdf_file = f.run()
 
-    return lang_code
+    return send_file(pdf_file, mimetype='application/pdf')
 
 
 @app.route('/test', methods=['POST', 'GET'], strict_slashes=False)
