@@ -1,14 +1,12 @@
 import codecs
 import os
 import regex as re
-# import shutil
 import sys
-# import time
 from string import Template
 
-from app.general_tools.app_utils import get_resources_dir
-from app.general_tools.file_utils import write_file
-from app.general_tools.url_utils import join_url_parts
+from lib.general_tools.app_utils import get_resources_dir
+from lib.general_tools.file_utils import write_file
+from lib.general_tools.url_utils import join_url_parts
 
 
 class OBSTexExport(object):
@@ -180,7 +178,7 @@ class OBSTexExport(object):
     def tex_load_snippet_file(self, xtr, entry_name):
 
         if not os.path.isdir(OBSTexExport.snippets_dir):
-            raise IOError('Path not found" {0}'.format(OBSTexExport.snippets_dir))
+            raise IOError('Path not found: {0}'.format(OBSTexExport.snippets_dir))
 
         with codecs.open(os.path.join(OBSTexExport.snippets_dir, entry_name), 'r', encoding='utf-8-sig') as in_file:
             each = in_file.readlines()

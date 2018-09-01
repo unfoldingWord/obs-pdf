@@ -2,6 +2,9 @@
 
 #### NOTE: Python 3 Only
 
+### Helpful Docs:
+https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uwsgi-and-nginx-on-ubuntu-16-04
+
 ### Image source
 
 Unzip into /opt/obs/images
@@ -29,4 +32,25 @@ docker exec -i dcs-context bash -c "cd /opt/obs-pdf && pip3 install -r requireme
 docker exec -i dcs-context bash -c "cd /opt/obs-pdf && python3 -m app.pdf_from_dcs --lang-code=en"
 docker cp dcs-context:/opt/obs-pdf/output /home/phil/docker-output
 docker stop dcs-context
+```
+
+### Python virtual environment
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Flask commands
+```bash
+cd public
+export FLASK_APP=obs_pdf.py
+flask run
+```
+
+### Run using wsgi
+```bash
+cd public
+uwsgi --socket 0.0.0.0:5000 --protocol=http -w wsgi:app --ini ../config/obs-pdf.ini
+nginx -g "daemon off;"
 ```

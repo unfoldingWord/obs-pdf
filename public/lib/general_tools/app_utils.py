@@ -1,10 +1,9 @@
-import inspect
 import os
 
 
 def get_app_root():
-    current_dir = os.path.dirname(inspect.stack()[0][1])
-    return os.path.dirname(os.path.dirname(current_dir))
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
 
 
 def get_resources_dir():
