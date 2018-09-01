@@ -28,7 +28,7 @@ docker container ls -a
 
 ### Run the Docker container, opening shell
 ```bash
-docker run --name dcs-context --rm --workdir /opt -i -t dcs-context bash
+docker run --name dcs-context --rm --workdir /opt -p 8080:80 -i -t dcs-context bash
 exit
 ```
 
