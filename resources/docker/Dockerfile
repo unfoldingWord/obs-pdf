@@ -1,10 +1,6 @@
-FROM nginx:1.14.0
+FROM tiangolo/uwsgi-nginx-flask:python3.6
 
 MAINTAINER DSM
-
-# use `bash` instead of the default `sh`,
-# because we call the built-in `source` command to activate the python virtual environment
-SHELL ["/bin/bash", "-c"]
 
 # install apt-utils so the rest of the install goes more smoothly
 RUN apt-get update \
@@ -17,9 +13,6 @@ RUN apt-get update \
         bzip2 \
         libfontconfig1 \
         curl \
-        python3 \
-        python3-pip \
-        python3-venv \
         haskell-platform \
         pandoc \
         pandoc-citeproc \
@@ -52,17 +45,10 @@ RUN mkdir -p /opt/obs/images \
     && unzip /opt/obs/jpg/obs-images-360px.zip -d /opt/obs/jpg
 
 # install the obs-pdf app
-RUN cd /opt && git clone --single-branch -b develop https://github.com/unfoldingWord-dev/obs-pdf.git \
-    && cd /opt/obs-pdf \
+RUN cd /app && git clone --single-branch -b develop https://github.com/unfoldingWord-dev/obs-pdf.git \
+    && cd /app/obs-pdf \
     && git pull \
-    && python3 -m venv venv \
-    && source venv/bin/activate \
     && pip install --upgrade -r prerequisites.txt \
     && pip install -r requirements.txt
 
-# configure nginx
-RUN rm -f /opt/obs-pdf/backup/default.conf \
-    && mv /etc/nginx/conf.d/default.conf /opt/obs-pdf/backup/default.conf \
-    && ln -sf /opt/obs-pdf/config/obs-pdf.conf /etc/nginx/conf.d/obs-pdf.conf
-
-#ENTRYPOINT ["/opt/obs-pdf/docker-entrypoint.sh"]
+COPY ./uwsgi.ini /app/uwsgi.ini
