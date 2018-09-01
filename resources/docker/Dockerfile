@@ -2,8 +2,12 @@ FROM tiangolo/uwsgi-nginx-flask:python3.6
 
 MAINTAINER DSM
 
+# Which uWSGI .ini file should be used, to make it customizable
+ENV UWSGI_INI /app/obs_pdf/public/uwsgi.ini
+
 # install apt-utils so the rest of the install goes more smoothly
 RUN apt-get update \
+    && apt-get dist-upgrade \
     && apt-get install -y apt-utils
 
 # install packages
@@ -48,7 +52,6 @@ RUN mkdir -p /opt/obs/images \
 RUN cd /app && git clone --single-branch -b develop https://github.com/unfoldingWord-dev/obs-pdf.git \
     && cd /app/obs-pdf \
     && git pull \
+    && pip install --upgrade pip \
     && pip install --upgrade -r prerequisites.txt \
     && pip install -r requirements.txt
-
-COPY ./uwsgi.ini /app/uwsgi.ini
