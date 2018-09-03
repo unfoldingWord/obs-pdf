@@ -49,7 +49,7 @@ RUN mkdir -p /opt/obs/images \
     && unzip /opt/obs/jpg/obs-images-360px.zip -d /opt/obs/jpg
 
 # install the obs-pdf app
-RUN cd /app && git clone --single-branch -b develop https://github.com/unfoldingWord-dev/obs-pdf.git \
+RUN cd /app && git clone --single-branch -b master https://github.com/unfoldingWord-dev/obs-pdf.git \
     && cd /app/obs-pdf \
     && git pull \
     && pip install --upgrade pip \
