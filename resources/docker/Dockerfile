@@ -55,3 +55,5 @@ RUN cd /app && git clone --single-branch -b develop https://github.com/unfolding
     && pip install --upgrade pip \
     && pip install --upgrade -r prerequisites.txt \
     && pip install -r requirements.txt
+
+COPY start.sh /start.sh
