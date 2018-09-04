@@ -164,7 +164,7 @@ class PdfFromDcs(object):
             # make sure the noto language file exists
             noto_file = path.join(get_resources_dir(), 'tex', 'noto-{0}.tex'.format(obs_lang_code))
             if not isfile(noto_file):
-                shutil.copy2(path.join(get_resources_dir(), 'tex', 'noto-all.tex'), noto_file)
+                shutil.copy2(path.join(get_resources_dir(), 'tex', 'noto-en.tex'), noto_file)
 
             # generate a tex file
             self.output += str(datetime.datetime.now()) + ' => Generating tex file.\n'
