@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 import os
-from flask import Flask, request, send_from_directory, send_file
+from flask import Flask, request, send_from_directory, send_file, Response
+
+from lib.general_tools.app_utils import get_output_dir
+from lib.general_tools.file_utils import read_file
 from lib.pdf_from_dcs import PdfFromDcs
 
 app = Flask(__name__)
@@ -22,8 +25,18 @@ def pdf_from_dcs():
     if len(lang_code) == 0:
         return 'Bad Request - no lang_code', 400
 
-    with PdfFromDcs(lang_code) as f:
-        pdf_file = f.run()
+    try:
+        with PdfFromDcs(lang_code) as f:
+            pdf_file = f.run()
+
+    except ChildProcessError:
+        err_text = 'AN ERROR OCCURRED GENERATING THE PDF\r\n\r\n'
+        err_text += read_file(os.path.join(get_output_dir(), 'context.err')) + '\r\n\r\n\r\nFULL CONTEXT OUTPUT\r\n\r\n'
+        err_text += read_file(os.path.join(get_output_dir(), 'context.out'))
+        return Response(err_text, mimetype='text/plain')
+
+    except Exception as e:
+        return Response(e, mimetype='text/plain')
 
     return send_file(pdf_file, mimetype='application/pdf')
 

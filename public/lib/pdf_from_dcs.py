@@ -6,10 +6,11 @@ import re
 import shutil
 import subprocess
 import time
+from os import path
 from os.path import isfile, isdir
 from typing import List
 
-from lib.general_tools.app_utils import get_output_dir
+from lib.general_tools.app_utils import get_output_dir, get_resources_dir
 from lib.general_tools.file_utils import make_dir, unzip, load_yaml_object, read_file, write_file
 from lib.general_tools.url_utils import get_catalog, download_file
 from lib.obs.obs_classes import OBSChapter, OBS, OBSError
@@ -159,6 +160,11 @@ class PdfFromDcs(object):
             out_dir = os.path.join(self.download_dir, 'make_pdf')
             make_dir(out_dir)
             obs_lang_code = obs_obj.language
+
+            # make sure the noto language file exists
+            noto_file = path.join(get_resources_dir(), 'noto-{0}.tex'.format(obs_lang_code))
+            if not isfile(noto_file):
+                shutil.copy2(path.join(get_resources_dir(), 'noto-all.tex'), noto_file)
 
             # generate a tex file
             self.output += str(datetime.datetime.now()) + ' => Generating tex file.\n'

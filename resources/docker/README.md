@@ -34,7 +34,9 @@ exit
 
 ### Run the Docker container in background and execute commands
 ```bash
-docker run -d --name dcs-context --rm --workdir /opt -i -t dcs-context
+# docker run -d --name dcs-context --rm --workdir /opt -i -t dcs-context
+# docker run --name dcs-context -p 8080:80 -dit --restart unless-stopped dcs-context
+docker run --name obs-pdf --rm -p 8080:80 -dit --cpus=0.5 phopper/obs-pdf:latest
 
 # simple commands
 docker exec dcs-context pwd
