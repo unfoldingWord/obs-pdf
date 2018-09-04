@@ -162,9 +162,9 @@ class PdfFromDcs(object):
             obs_lang_code = obs_obj.language
 
             # make sure the noto language file exists
-            noto_file = path.join(get_resources_dir(), 'noto-{0}.tex'.format(obs_lang_code))
+            noto_file = path.join(get_resources_dir(), 'tex', 'noto-{0}.tex'.format(obs_lang_code))
             if not isfile(noto_file):
-                shutil.copy2(path.join(get_resources_dir(), 'noto-all.tex'), noto_file)
+                shutil.copy2(path.join(get_resources_dir(), 'tex', 'noto-all.tex'), noto_file)
 
             # generate a tex file
             self.output += str(datetime.datetime.now()) + ' => Generating tex file.\n'
