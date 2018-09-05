@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import os
-from flask import Flask, request, send_from_directory, send_file, Response
+from flask import Flask, request, send_from_directory, Response, redirect
 
 from lib.general_tools.app_utils import get_output_dir
 from lib.general_tools.file_utils import read_file
@@ -38,7 +38,7 @@ def pdf_from_dcs():
     except Exception as e:
         return Response(e, mimetype='text/plain')
 
-    return send_file(pdf_file, mimetype='application/pdf')
+    return redirect('/output/{0}'.format(pdf_file), code=302)
 
 
 @app.route('/test', methods=['POST', 'GET'], strict_slashes=False)

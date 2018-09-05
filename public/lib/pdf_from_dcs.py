@@ -233,10 +233,11 @@ class PdfFromDcs(object):
             if not isdir(output_dir):
                 make_dir(output_dir, linux_mode=0o777, error_if_not_writable=True)
 
-            pdf_file = os.path.join(output_dir, 'obs-{0}-{1}.pdf'.format(obs_lang_code, version))
+            pdf_name = 'obs-{0}-{1}.pdf'.format(obs_lang_code, version)
+            pdf_file = os.path.join(output_dir, pdf_name)
             shutil.copyfile(os.path.join(out_dir, '{0}.pdf'.format(obs_lang_code)), pdf_file)
 
-            return pdf_file
+            return pdf_name
 
         finally:
             self.output += str(datetime.datetime.now()) + ' => Finished generating PDF.\n'
