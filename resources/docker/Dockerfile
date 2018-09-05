@@ -57,3 +57,4 @@ RUN cd /app && git clone --single-branch -b master https://github.com/unfoldingW
     && pip install -r requirements.txt
 
 COPY start.sh /start.sh
+COPY nginx.conf /etc/nginx/conf.d/nginx.conf
