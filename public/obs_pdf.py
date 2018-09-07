@@ -38,7 +38,7 @@ def pdf_from_dcs():
     except Exception as e:
         return Response(e, mimetype='text/plain')
 
-    return redirect('/output/{0}'.format(pdf_file), code=302)
+    return redirect('/output/{0}/{1}'.format(lang_code, pdf_file), code=302)
 
 
 @app.route('/test', methods=['POST', 'GET'], strict_slashes=False)
