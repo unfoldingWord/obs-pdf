@@ -5,6 +5,14 @@ MAINTAINER DSM
 # Which uWSGI .ini file should be used, to make it customizable
 ENV UWSGI_INI /app/obs-pdf/public/uwsgi.ini
 
+# URL under which static (not modified by Python) files will be requested
+# They will be served by Nginx directly, without being handled by uWSGI
+ENV STATIC_URL /output
+# Absolute path in where the static files wil be
+ENV STATIC_PATH /app/obs-pdf/output
+# Timeout in seconds for processing Flask requests
+ENV NGINX_TIMEOUT 300
+
 # install apt-utils so the rest of the install goes more smoothly
 RUN apt-get update \
     && apt-get dist-upgrade -y \
@@ -57,4 +65,4 @@ RUN cd /app && git clone --single-branch -b master https://github.com/unfoldingW
     && pip install -r requirements.txt
 
 COPY start.sh /start.sh
-COPY nginx.conf /etc/nginx/conf.d/nginx.conf
+COPY entrypoint.sh /entrypoint.sh
