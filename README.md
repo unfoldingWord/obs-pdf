@@ -2,55 +2,37 @@
 
 #### NOTE: Python 3 Only
 
-### Helpful Docs:
-https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uwsgi-and-nginx-on-ubuntu-16-04
+#### NOTE: This project is designed so that it can generate a Docker container which serves the application using Nginx.
 
-### Image source
+The Flask app has 2 endpoints:
+ 
+* `/test` which serves a simple test page
+* `/?lang_code=xx` which attempts to generate an OBS PDF file for the requested language code (xx). If successful the client is redirected to the PDF file. If not successful, the client will receive a detailed description of the problem.
 
-Unzip into /opt/obs/images
 
-https://cdn.unfoldingword.org/obs/jpg/obs-images-360px.zip
-https://unfoldingword.org/assets/img/uW-Level-1-128px.png
-https://unfoldingword.org/assets/img/uW-Level-2-128px.png
-https://unfoldingword.org/assets/img/uW-Level-3-128px.png
-https://cdn.door43.org/obs/jpg/uWOBSverticallogo1200w.png
-https://cdn.door43.org/obs/jpg/uWOBSverticallogo600w.png
+## Container Structure
 
-### To run in Python 3.6
+The docker container was split into 2 so that the Python code could be updated without requiring the large number of image files to be updated also. This greatly reduced the time required to build and deploy the container.
+
+
+## Running on AWS EC2
+
+#### Production
+The smallest EC2 instance I was able to get it to run on successfully is `t3.small`. Anything less that that would lock up consistently.
+
+This is the command line used to start the Docker container on the EC2 instance:
 ```bash
-cd /opt && git clone https://github.com/unfoldingWord-dev/obs-pdf.git
-cd /opt/obs-pdf && pip3 install -r requirements.txt
-cd /opt/obs-pdf && python3 -m app.pdf_from_dcs --lang-code=en
+docker run --name obs-pdf -p 8080:80 -dit --cpus=1.0 --restart unless-stopped phopper/obs-pdf:latest
 ```
 
-### Docker commands
+#### Debugging
+For testing and debugging, start the Docker container with this command:
 ```bash
-docker run --name dcs-context -d --rm --workdir /opt -i -t dcs-context
-docker exec dcs-context git clone https://github.com/unfoldingWord-dev/obs-pdf.git
-docker exec -i dcs-context bash -c "cd /opt/obs-pdf && git fetch --all && git checkout origin/develop"
-docker exec -i dcs-context bash -c "cd /opt/obs-pdf && pip3 install -r requirements.txt"
-docker exec -i dcs-context bash -c "cd /opt/obs-pdf && python3 -m app.pdf_from_dcs --lang-code=en"
-docker cp dcs-context:/opt/obs-pdf/output /home/phil/docker-output
-docker stop dcs-context
+docker run --name obs-pdf --rm -p 8080:80 -it --cpus=0.5 phopper/obs-pdf:latest bash
 ```
 
-### Python virtual environment
+Then, inside the container, run these commands to start the application:
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Flask commands
-```bash
-cd public
-export FLASK_APP=obs_pdf.py
-flask run
-```
-
-### Run using wsgi
-```bash
-cd public
-uwsgi --socket 0.0.0.0:5000 --protocol=http -w wsgi:app --ini ../config/obs-pdf.ini
-nginx -g "daemon off;"
+cd /
+./start.sh
 ```
