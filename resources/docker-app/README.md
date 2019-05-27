@@ -11,9 +11,13 @@ sudo reboot
 
 ### Build the Docker container
 ```bash
-cd ~/Projects/dsm-docker
+# cd ~/Projects/uW-docker
 # docker build -t obs-pdf - < Dockerfile
-docker-compose build --force-rm
+# docker-compose build --force-rm
+make baseContainer
+make mainContainer
+make pushBaseImage
+make pushMainImage
 ```
 
 ### Show running containers
@@ -34,9 +38,9 @@ exit
 
 ### Run the Docker container in background and execute commands
 ```bash
-docker pull phopper/obs-pdf:latest
-docker run --name obs-pdf --rm -p 8080:80 -dit --cpus=0.5 phopper/obs-pdf:latest
-docker run --name obs-pdf -p 8080:80 -dit --cpus=0.5 --restart unless-stopped phopper/obs-pdf:latest
+docker pull unfoldingWord/obs-pdf:latest
+docker run --name obs-pdf --rm -p 8080:80 -dit --cpus=0.5 unfoldingWord/obs-pdf:latest
+docker run --name obs-pdf -p 8080:80 -dit --cpus=0.5 --restart unless-stopped unfoldingWord/obs-pdf:latest
 
 # simple commands
 docker exec obs-pdf pwd

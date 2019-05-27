@@ -1,6 +1,4 @@
-FROM phopper/obs-base:latest
-
-MAINTAINER DSM
+FROM unfoldingword/obs-base:latest
 
 # Which uWSGI .ini file should be used, to make it customizable
 ENV UWSGI_INI /app/obs-pdf/public/uwsgi.ini
@@ -14,7 +12,7 @@ ENV STATIC_PATH /app/obs-pdf/output
 ENV NGINX_TIMEOUT 300
 
 # install the obs-pdf app
-RUN cd /app && git clone --single-branch -b master https://github.com/unfoldingWord-dev/obs-pdf.git \
+RUN cd /app && git clone --single-branch -b develop https://github.com/unfoldingWord-dev/obs-pdf.git \
     && cd /app/obs-pdf \
     && git pull \
     && pip install --upgrade pip \

@@ -11,5 +11,5 @@ exit
 
 ```bash
 docker info
-docker run --name obs-pdf --rm -p 8080:80 -i -t phopper/obs-pdf:latest bash
+docker run --name obs-pdf --rm -p 8080:80 -i -t unfoldingWord/obs-pdf:latest bash
 ```
