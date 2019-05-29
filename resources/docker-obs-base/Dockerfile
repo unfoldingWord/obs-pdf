@@ -27,7 +27,7 @@ RUN apt-get update \
     && mkdir -p /opt/obs/images \
     && mkdir -p /opt/obs/png \
     && mkdir -p /opt/obs/jpg \
-    && curl -sL https://cdn.door43.org/obs/jpg/obs-images-360px.zip -o /opt/obs/jpg/obs-images-360px.zip \
+    && curl -sL https://filedn.com/lD0GfuMvTstXgqaJfpLL87S/obs/jpg/obs-images-360px.zip -o /opt/obs/jpg/obs-images-360px.zip \
     && curl -sL https://unfoldingword.org/assets/img/uW-Level-1-128px.png -o /opt/obs/png/uW-Level-1-128px.png \
     && curl -sL https://unfoldingword.org/assets/img/uW-Level-2-128px.png -o /opt/obs/png/uW-Level-2-128px.png \
     && curl -sL https://unfoldingword.org/assets/img/uW-Level-3-128px.png -o /opt/obs/png/uW-Level-3-128px.png \
