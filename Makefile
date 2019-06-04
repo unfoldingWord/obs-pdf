@@ -1,31 +1,36 @@
 # Created: 2019-05-27 RJH
 
 baseContainer:
-    docker build --tag unfoldingword/obs-base:latest resources/docker-obs-base/
+	docker build --tag unfoldingword/obs-base:latest resources/docker-obs-base/
 
 pushBaseImage:
 	docker push unfoldingword/obs-base:latest
 
-# composeMainContainer:
-# 	docker-compose --file resources/docker-app/WhereIsYamlFile build
+mainContainerDev:
+	docker build --file resources/docker-app/Dockerfile-developBranch --tag unfoldingword/obs-pdf:develop resources/docker-app/
+
 mainContainer:
-    docker build --tag unfoldingword/obs-pdf:latest resources/docker-app/
+	docker build --file resources/docker-app/Dockerfile-masterBranch --tag unfoldingword/obs-pdf:master resources/docker-app/
+
+pushMainDevImage:
+	docker push unfoldingword/obs-pdf:develop
 
 pushMainImage:
-	docker push unfoldingword/obs-pdf:latest
+	docker push unfoldingword/obs-pdf:master
 
-# From Door43 enqueue
-# imageDev:
-# 	# NOTE: This build sets the prefix to 'dev-' and sets debug mode
-# 	docker build --file enqueue/Dockerfile-developBranch --tag unfoldingword/door43_enqueue_job:develop enqueue
+run:
+	docker run --name obs-pdf -p 8123:80 -dit --cpus=1.0 --restart unless-stopped unfoldingword/obs-pdf:master
 
-# imageMaster:
-# 	docker build --file enqueue/Dockerfile-masterBranch --tag unfoldingword/door43_enqueue_job:master enqueue
+runDev:
+	docker run --name obs-pdf -p 8123:80 -dit --cpus=1.0 --restart unless-stopped unfoldingword/obs-pdf:develop
+	# Then browse to http://localhost:8123/test
+	#	or http://localhost:8123/?lang_code=en
+	#	then http://localhost:8123/output/en/obs-en-v5.pdf
 
-# pushDevImage:
-# 	# Expects to be already logged into Docker, i.e., docker login -u $(DOCKER_USERNAME)
-# 	docker push unfoldingword/door43_enqueue_job:develop
-
-# pushMasterImage:
-# 	# Expects to be already logged into Docker, i.e., docker login -u $(DOCKER_USERNAME)
-# 	docker push unfoldingword/door43_enqueue_job:master
+runDevDebug:
+	docker run --name obs-pdf --rm -p 8123:80 -it --cpus=0.5 unfoldingword/obs-pdf:develop bash
+	# Then, inside the container, run these commands to start the application:
+	#	cd /
+	#	./start.sh
+	#
+	# conTeXt logs will be in /app/obs-pdf/output (context.err and context.out)

@@ -9,6 +9,7 @@ from lib.general_tools.file_utils import write_file
 from lib.general_tools.url_utils import join_url_parts
 
 
+
 class OBSTexExport(object):
 
     # region Class Settings
@@ -80,6 +81,7 @@ class OBSTexExport(object):
 
     # endregion
 
+
     def __init__(self, obs_obj, out_path, max_chapters, img_res):
         """
 
@@ -102,12 +104,14 @@ class OBSTexExport(object):
 
         self.num_items = 0
 
+
     def __enter__(self):
         return self
 
     # noinspection PyUnusedLocal
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
+
 
     def check_for_standard_keys_json(self):
 
@@ -169,11 +173,13 @@ class OBSTexExport(object):
         if 'checkinglevel' not in self.body_json.keys():
             self.body_json['checkinglevel'] = self.checking_level
 
+
     def another_replace(self, match_obj):
         keyword = match_obj.group(1)
         if keyword in self.body_json.keys():
             return self.body_json[keyword]
         return 'nothing'
+
 
     def tex_load_snippet_file(self, xtr, entry_name):
 
@@ -196,6 +202,7 @@ class OBSTexExport(object):
         return_val = xtr + ('\n' + xtr).join(each) + '\n'
         return return_val
 
+
     def get_title(self, text):
 
         if self.lang_direction == 'rtl':
@@ -204,10 +211,12 @@ class OBSTexExport(object):
             text_dir = 'TLT'
         return '    \\startmakeup\\textdir {0}\\section{{{1}}}\\stopmakeup'.format(text_dir, text)
 
+
     @staticmethod
     def get_image(xtr, fid, res):
-        img_link = join_url_parts(OBSTexExport.api_url_jpg, res, 'obs-{0}.jpg'.format(fid))
+        img_link = join_url_parts(OBSTexExport.api_url_jpg, res, f'obs-{fid}.jpg')
         return xtr + xtr + xtr + '{{\\externalfigure[{0}][yscale={1}]}}'.format(img_link, 950)  # 950 = 95%
+
 
     @staticmethod
     def get_frame(xtr, tex_reg):
@@ -218,6 +227,7 @@ class OBSTexExport(object):
             xtr2 + '\\placefigure[nonumber]',
             xtr3 + '{{\\copy\\{0}}}'.format(tex_reg)
         ])
+
 
     @staticmethod
     def do_not_break_before_chapter_verse(text):
@@ -233,6 +243,7 @@ class OBSTexExport(object):
         copy = OBSTexExport.matchOrdinalBookSpaces.sub(r'\1' + OBSTexExport.NBSP, copy, OBSTexExport.MATCH_ALL)
         return copy
 
+
     def get_ref(self, place_ref_template, text):
 
         if self.body_json['direction'] == 'rtl':
@@ -241,6 +252,7 @@ class OBSTexExport(object):
             pardir = 'TLT'
         each = place_ref_template.substitute(thetext=text, pardir=pardir).split('\n')
         return '\n'.join(each)
+
 
     @staticmethod
     def filter_apply_docuwiki_start(single_line):
@@ -277,17 +289,20 @@ class OBSTexExport(object):
 
         return single_line
 
+
     @staticmethod
     def filter_apply_docuwiki_finish(single_line):
         single_line = OBSTexExport.matchPipePat.sub(r'\\textbar{}', single_line, OBSTexExport.MATCH_ALL)
         single_line = OBSTexExport.matchRemoveDummyTokenPat.sub(r'', single_line, OBSTexExport.MATCH_ALL)
         return single_line
 
+
     @staticmethod
     def filter_apply_docuwiki(single_line):
         single_line = OBSTexExport.filter_apply_docuwiki_start(single_line)
         single_line = OBSTexExport.filter_apply_docuwiki_finish(single_line)
         return single_line
+
 
     @staticmethod
     def filter_apply_docuwiki_and_links(single_line):
@@ -302,6 +317,7 @@ class OBSTexExport(object):
         single_line = OBSTexExport.filter_apply_docuwiki_finish(single_line)
         # if (shew): print "!!single_line=",single_line
         return single_line
+
 
     def export_matter(self, lang_message, test):
         """
@@ -352,13 +368,16 @@ class OBSTexExport(object):
             matter.append(single_line)
         return j.join(matter)
 
+
     @staticmethod
     def start_of_physical_page(xtr):
         return '\n'.join([xtr + '%%START-OF-PHYSICAL-PAGE', xtr + '\\vtop{'])
 
+
     @staticmethod
     def end_of_physical_page(xtr):
         return '\n'.join([xtr + '}', xtr + '%%END-OF-PHYSICAL-PAGE'])
+
 
     def export(self, chapters_json, max_chapters, img_res, lang):
         """
@@ -434,7 +453,7 @@ class OBSTexExport(object):
                     output.append(adjust_one.safe_substitute(tex_dict))
                 if is_even:
                     output.append(OBSTexExport.start_of_physical_page(spaces4))
-                output.append(spaces4 + spaces4 + ''.join(['\message{FIGURE: ', lang, '-', fr['id'], '}']))
+                output.append(spaces4 + spaces4 + ''.join(['\\message{FIGURE: ', lang, '-', fr['id'], '}']))
                 output.append(text_frame)
                 output.append(image_frame)
                 if (not is_even) and (not is_last_page):
@@ -444,6 +463,7 @@ class OBSTexExport(object):
             output.append(OBSTexExport.end_of_physical_page(spaces4))
             output.append(spaces4 + '\\page[yes]')
         return j.join(output)
+
 
     def run(self):
 

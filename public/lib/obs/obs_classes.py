@@ -8,6 +8,7 @@ from lib.general_tools.file_utils import load_json_object
 from lib.obs import chapters_and_frames
 
 
+
 class OBSStatus(object):
     def __init__(self, file_name=None):
         """
@@ -30,8 +31,10 @@ class OBSStatus(object):
             self.source_text_version = ''
             self.version = ''
 
+
     def __contains__(self, item):
         return item in self.__dict__
+
 
     @staticmethod
     def from_manifest(manifest):
@@ -51,12 +54,14 @@ class OBSStatus(object):
         return status
 
 
+
 class OBSChapter(object):
 
     title_re = re.compile(r'^\s*#(.*?)#*\n', re.UNICODE)
     ref_re = re.compile(r'\n(_*.*?_*)\n*$', re.UNICODE)
     frame_re = re.compile(r'!\[OBS Image\].*?obs-en-(\d\d)-(\d\d)\.jpg.*?\)\n([^!]*)', re.UNICODE)
     img_url = 'https://cdn.door43.org/obs/jpg/360px/obs-en-{0}.jpg'
+
 
     def __init__(self, json_obj=None):
         """
@@ -72,6 +77,7 @@ class OBSChapter(object):
             self.number = ''
             self.ref = ''
             self.title = ''
+
 
     def get_errors(self):
         """
@@ -120,12 +126,15 @@ class OBSChapter(object):
 
         return errors
 
+
     def __getitem__(self, item):
         if item in self.__dict__:
             return self.__dict__[item]
 
+
     def __str__(self):
         return self.__class__.__name__ + ' ' + self.number
+
 
     @staticmethod
     def from_markdown(markdown, chapter_number):
@@ -175,6 +184,7 @@ class OBSChapter(object):
         return return_val
 
 
+
 class OBS(object):
 
     def __init__(self, file_name=None):
@@ -211,6 +221,7 @@ class OBS(object):
             self.front_matter = ''
             self.back_matter = ''
 
+
     def verify_all(self):
 
         errors = []
@@ -229,9 +240,11 @@ class OBS(object):
             return False
 
 
+
 class OBSEncoder(JSONEncoder):
     def default(self, o):
         return o.__dict__
+
 
 
 class OBSError(Exception):

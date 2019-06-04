@@ -17,19 +17,23 @@ from lib.obs.obs_classes import OBSChapter, OBS, OBSError
 from lib.obs.obs_tex_export import OBSTexExport
 
 
-class PdfFromDcs(object):
+
+class PdfFromDcs:
 
     def __init__(self, lang_code: str):
         self.lang_code = lang_code
-        self.download_dir = '/tmp/obs-to-pdf/{0}-{1}'.format(lang_code, int(time.time()))
+        self.download_dir = f'/tmp/obs-to-pdf/{lang_code}-{int(time.time())}'
         self.output = ''
+
 
     def __enter__(self):
         return self
 
+
     # noinspection PyUnusedLocal
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
+
 
     def run(self) -> str:
 
@@ -37,7 +41,7 @@ class PdfFromDcs(object):
         today = ''.join(str(datetime.date.today()).rsplit(str('-'))[0:3])  # str(datetime.date.today())
         self.download_dir = '/tmp/obs-to-pdf/{0}-{1}'.format(self.lang_code, int(time.time()))
         make_dir(self.download_dir)
-        downloaded_file = '{0}/obs.zip'.format(self.download_dir)
+        downloaded_file = f'{self.download_dir}/obs.zip'
 
         # get the catalog
         self.output += str(datetime.datetime.now()) + ' => Downloading the catalog.\n'
@@ -47,10 +51,10 @@ class PdfFromDcs(object):
         langs = [l for l in catalog['languages'] if l['identifier'] == self.lang_code]  # type: dict
 
         if len(langs) == 0:
-            raise ValueError('Did not find "{}" in the catalog.'.format(self.lang_code))
+            raise ValueError(f'Did not find "{self.lang_code}" in the catalog.')
 
         if len(langs) > 1:
-            raise ValueError('Found more than one entry for "{}" in the catalog.'.format(self.lang_code))
+            raise ValueError(f'Found more than one entry for "{self.lang_code}" in the catalog.')
 
         lang_info = langs[0]  # type: dict
 
@@ -58,10 +62,10 @@ class PdfFromDcs(object):
         resources = [r for r in lang_info['resources'] if r['identifier'] == 'obs']  # type: dict
 
         if len(resources) == 0:
-            raise ValueError('Did not find an entry for "{}" OBS in the catalog.'.format(self.lang_code))
+            raise ValueError(f'Did not find an entry for "{self.lang_code}" OBS in the catalog.')
 
         if len(resources) > 1:
-            raise ValueError('Found more than one entry for "{}" OBS in the catalog.'.format(self.lang_code))
+            raise ValueError(f'Found more than one entry for "{self.lang_code}" OBS in the catalog.')
 
         resource = resources[0]  # type: dict
 
@@ -148,6 +152,7 @@ class PdfFromDcs(object):
 
         return self.create_pdf(obs_obj)
 
+
     def create_pdf(self, obs_obj: OBS) -> str:
         """
         Creates the PDF via ConTeXt and returns the full path to the finished file
@@ -233,14 +238,17 @@ class PdfFromDcs(object):
             if not isdir(output_dir):
                 make_dir(output_dir, linux_mode=0o777, error_if_not_writable=True)
 
-            pdf_name = 'obs-{0}-{1}.pdf'.format(obs_lang_code, version)
+            pdf_name = f'obs-{obs_lang_code}-{version}.pdf'
             pdf_file = os.path.join(output_dir, pdf_name)
-            shutil.copyfile(os.path.join(out_dir, '{0}.pdf'.format(obs_lang_code)), pdf_file)
+            shutil.copyfile(os.path.join(out_dir, f'{obs_lang_code}.pdf'), pdf_file)
 
             return pdf_name
 
         finally:
             self.output += str(datetime.datetime.now()) + ' => Finished generating PDF.\n'
+            with open(os.path.join(output_dir, 'log_output_file.txt'), 'wt') as log_output_file:
+                log_output_file.write(self.output)
+
 
     @staticmethod
     def load_obs_chapters(content_dir: str) -> List[OBSChapter]:
@@ -248,7 +256,7 @@ class PdfFromDcs(object):
 
         for story_num in range(1, 51):
             chapter_num = str(story_num).zfill(2)
-            story_file = os.path.join(content_dir, '{0}.md'.format(chapter_num))
+            story_file = os.path.join(content_dir, f'{chapter_num}.md')
 
             # get the translated chapter text
             with codecs.open(story_file, 'r', encoding='utf-8-sig') as in_file:
