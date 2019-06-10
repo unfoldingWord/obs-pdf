@@ -33,7 +33,7 @@ RUN apt-get update \
     && curl -sL https://unfoldingword.org/assets/img/uW-Level-3-128px.png -o /opt/obs/png/uW-Level-3-128px.png \
     && curl -sL https://cdn.door43.org/obs/png/uW_OBS_Logo.png -o /opt/obs/png/uW_OBS_Logo.png \
     && unzip /opt/obs/jpg/obs-images-360px.zip -d /opt/obs/jpg \
-    && rm /opt/obs/jpg/obs-images-360px.zip
+    && rm -v /opt/obs/jpg/obs-images-360px.zip
 
     # && curl -sL https://cdn.door43.org/obs/jpg/uWOBSverticallogo1200w.png -o /opt/obs/png/uWOBSverticallogo1200w.png \
     # && curl -sL https://cdn.door43.org/obs/jpg/uWOBSverticallogo600w.png -o /opt/obs/png/uWOBSverticallogo600w.png \

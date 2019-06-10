@@ -31,14 +31,15 @@ def pdf_from_dcs():
 
     except ChildProcessError:
         err_text = 'AN ERROR OCCURRED GENERATING THE PDF\r\n\r\n'
-        err_text += read_file(os.path.join(get_output_dir(), 'context.err')) + '\r\n\r\n\r\nFULL CONTEXT OUTPUT\r\n\r\n'
+        err_text += read_file(os.path.join(get_output_dir(), 'context.err'))
+        err_text += '\r\n\r\n\r\nFULL CONTEXT OUTPUT\r\n\r\n'
         err_text += read_file(os.path.join(get_output_dir(), 'context.out'))
         return Response(err_text, mimetype='text/plain')
 
     except Exception as e:
         return Response(e, mimetype='text/plain')
 
-    return redirect('/output/{0}/{1}'.format(lang_code, pdf_file), code=302)
+    return redirect(f'/output/{lang_code}/{pdf_file}', code=302)
 
 
 @app.route('/test', methods=['POST', 'GET'], strict_slashes=False)

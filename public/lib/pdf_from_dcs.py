@@ -24,6 +24,7 @@ class PdfFromDcs:
         self.lang_code = lang_code
         self.download_dir = f'/tmp/obs-to-pdf/{lang_code}-{int(time.time())}'
         self.output = ''
+        self.output_msg_filepath = '/tmp/last_output_msgs.txt'
 
 
     def __enter__(self):
@@ -44,7 +45,8 @@ class PdfFromDcs:
         downloaded_file = f'{self.download_dir}/obs.zip'
 
         # get the catalog
-        self.output += str(datetime.datetime.now()) + ' => Downloading the catalog.\n'
+        self.output += f"{datetime.datetime.now()} => Downloading the catalog.\n"
+        write_file(self.output_msg_filepath, self.output)
         catalog = get_catalog()
 
         # find the language we need
@@ -108,11 +110,13 @@ class PdfFromDcs:
             raise NotADirectoryError('Did not find the content directory in the resource container')
 
         # 4. Read the manifest (status, version, localized name, etc)
-        self.output += str(datetime.datetime.now()) + ' => Reading the manifest.\n'
+        self.output += f"{datetime.datetime.now()} => Reading the manifest.\n"
+        write_file(self.output_msg_filepath, self.output)
         manifest = load_yaml_object(manifest_file)
 
         # 5. Initialize OBS objects
-        self.output += str(datetime.datetime.now()) + ' => Initializing the OBS object.\n'
+        self.output += f"{datetime.datetime.now()} => Initializing the OBS object.\n"
+        write_file(self.output_msg_filepath, self.output)
         lang = manifest['dublin_core']['language']['identifier']
         obs_obj = OBS()
         obs_obj.date_modified = today
@@ -122,16 +126,18 @@ class PdfFromDcs:
         obs_obj.checking_level = manifest['checking']['checking_level']
 
         # 6. Import the chapter data
-        self.output += str(datetime.datetime.now()) + ' => Reading the chapter files.\n'
+        self.output += f"{datetime.datetime.now()} => Reading the chapter files.\n"
+        write_file(self.output_msg_filepath, self.output)
         obs_obj.chapters = self.load_obs_chapters(content_dir)
         obs_obj.chapters.sort(key=lambda c: int(c['number']))
 
-        self.output += str(datetime.datetime.now()) + ' => Verifying the chapter data.\n'
+        self.output += f"{datetime.datetime.now()} => Verifying the chapter data.\n"
+        write_file(self.output_msg_filepath, self.output)
         if not obs_obj.verify_all():
             raise OBSError('Quality check did not pass.')
 
         # 7. Front and back matter
-        self.output += str(datetime.datetime.now()) + ' => Reading the front and back matter.\n'
+        self.output += f"{datetime.datetime.now()} => Reading the front and back matter.\n"
         title_file = os.path.join(content_dir, 'front', 'title.md')
         if not isfile(title_file):
             raise OBSError('Did not find the title file in the resource container')
@@ -159,11 +165,13 @@ class PdfFromDcs:
         :param obs_obj: OBS
         :return: str
         """
-
         try:
-            self.output += str(datetime.datetime.now()) + ' => Beginning PDF generation.\n'
+            self.output += f"{datetime.datetime.now()} => Beginning PDF generation.\n"
+            write_file(self.output_msg_filepath, self.output)
+
             out_dir = os.path.join(self.download_dir, 'make_pdf')
             make_dir(out_dir)
+
             obs_lang_code = obs_obj.language
 
             # make sure the noto language file exists
@@ -172,7 +180,8 @@ class PdfFromDcs:
                 shutil.copy2(path.join(get_resources_dir(), 'tex', 'noto-en.tex'), noto_file)
 
             # generate a tex file
-            self.output += str(datetime.datetime.now()) + ' => Generating tex file.\n'
+            self.output += f"{datetime.datetime.now()} => Generating tex file.\n"
+            write_file(self.output_msg_filepath, self.output)
             tex_file = os.path.join(out_dir, '{0}.tex'.format(obs_lang_code))
 
             # make sure it doesn't already exist
@@ -182,42 +191,49 @@ class PdfFromDcs:
             with OBSTexExport(obs_obj, tex_file, 0, '360px') as tex:
                 tex.run()
 
-            # run context
-            self.output += str(datetime.datetime.now()) + ' => Running ConTeXt - this may take several minutes.\n'
+            # Run ConTeXt
+            self.output += f"{datetime.datetime.now()} => Preparing to run ConTeXt.\n"
+            write_file(self.output_msg_filepath, self.output)
 
             # noinspection PyTypeChecker
             trackers = ','.join(['afm.loading', 'fonts.missing', 'fonts.warnings', 'fonts.names',
                                  'fonts.specifications', 'fonts.scaling', 'system.dump'])
 
-            # this command line has 3 parts:
+            # This command line has 3 parts:
             #   1. set the OSFONTDIR environment variable to the fonts directory where the noto fonts can be found
             #   2. run `mtxrun` to load the noto fonts so ConTeXt can find them
             #   3. run ConTeXt to generate the PDF
             cmd = 'export OSFONTDIR="/usr/share/fonts"' \
                   ' && mtxrun --script fonts --reload' \
-                  ' && context --paranoid --batchmode --trackers={0} "{1}"'.format(trackers, tex_file)
+                  f' && context --paranoid --nonstopmode --trackers={trackers} "{tex_file}"'
 
             # the output from the cmd will be dumped into these files
             out_log = os.path.join(get_output_dir(), 'context.out')
             if isfile(out_log):
                 os.unlink(out_log)
 
-            err_log = os.path.join(get_output_dir(), 'context.err')
-            if isfile(err_log):
-                os.unlink(err_log)
+            err_log_path = os.path.join(get_output_dir(), 'context.err')
+            if isfile(err_log_path):
+                os.unlink(err_log_path)
 
+            self.output += f"{datetime.datetime.now()} => Running ConTeXt - this may take several minutes.\n"
+            write_file(self.output_msg_filepath, self.output)
             try:
                 std_out = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, cwd=out_dir)
+                self.output += f"{datetime.datetime.now()} => Getting ConTeXt output.\n"
+                write_file(self.output_msg_filepath, self.output)
                 std_out = re.sub(r'\n\n+', '\n', std_out.decode('utf-8'), flags=re.MULTILINE)
                 write_file(out_log, std_out)
 
                 err_lines = re.findall(r'(^tex error.+)\n?', std_out, flags=re.MULTILINE)
 
                 if err_lines:
-                    write_file(err_log, '\n'.join(err_lines))
-                    raise ChildProcessError('Errors were generated by ConTeXt. See {}.'.format(err_log))
+                    write_file(err_log_path, '\n'.join(err_lines))
+                    raise ChildProcessError(f"Errors were generated by ConTeXt. See {err_log_path}.")
 
             except subprocess.CalledProcessError as e:
+                self.output += f"{datetime.datetime.now()} => ConTeXt process failed!\n"
+                write_file(self.output_msg_filepath, self.output)
 
                 # find the tex error lines
                 std_out = e.stdout.decode('utf-8')
@@ -225,11 +241,12 @@ class PdfFromDcs:
                 err_lines = re.findall(r'(^tex error.+)\n?', std_out, flags=re.MULTILINE)
 
                 write_file(out_log, std_out)
-                write_file(err_log, '\n'.join(err_lines))
+                write_file(err_log_path, '\n'.join(err_lines))
 
-                raise ChildProcessError('Errors were generated by ConTeXt. See {}.'.format(err_log))
+                raise ChildProcessError('Errors were generated by ConTeXt. See {}.'.format(err_log_path))
 
-            self.output += str(datetime.datetime.now()) + ' => Copying the PDF file to output directory.\n'
+            self.output += f"{datetime.datetime.now()} => Copying the PDF file to output directory.\n"
+            write_file(self.output_msg_filepath, self.output)
             version = obs_obj.version.replace('.', '_')
             if version[0:1] != 'v':
                 version = 'v' + version
@@ -245,9 +262,10 @@ class PdfFromDcs:
             return pdf_name
 
         finally:
-            self.output += str(datetime.datetime.now()) + ' => Finished generating PDF.\n'
-            with open(os.path.join(output_dir, 'log_output_file.txt'), 'wt') as log_output_file:
-                log_output_file.write(self.output)
+            self.output += f"{datetime.datetime.now()} => Exiting PDF generation code...\n"
+            write_file(self.output_msg_filepath, self.output)
+            # with open(, 'wt') as log_output_file:
+                # log_output_file.write(self.output)
 
 
     @staticmethod

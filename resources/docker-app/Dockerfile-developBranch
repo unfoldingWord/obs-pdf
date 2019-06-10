@@ -12,7 +12,8 @@ ENV STATIC_PATH /app/obs-pdf/output
 ENV NGINX_TIMEOUT 300
 
 # install the obs-pdf app
-RUN cd /app && git clone --single-branch -b develop https://github.com/unfoldingWord-dev/obs-pdf.git \
+RUN cd /app \
+    && git clone --single-branch -b develop https://github.com/unfoldingWord-dev/obs-pdf.git \
     && cd /app/obs-pdf \
     && git pull \
     && pip install --upgrade pip \

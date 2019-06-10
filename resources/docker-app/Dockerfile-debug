@@ -1,3 +1,4 @@
+#FROM phopper/obs-base:latest
 FROM unfoldingword/obs-base:latest
 
 # Which uWSGI .ini file should be used, to make it customizable
@@ -11,14 +12,13 @@ ENV STATIC_PATH /app/obs-pdf/output
 # Timeout in seconds for processing Flask requests
 ENV NGINX_TIMEOUT 300
 
+COPY . /app/obs-pdf/
+
 # install the obs-pdf app
-RUN cd /app \
-    && git clone --single-branch -b master https://github.com/unfoldingWord-dev/obs-pdf.git \
-    && cd /app/obs-pdf \
-    && git pull \
+RUN cd /app/obs-pdf \
     && pip install --upgrade pip \
     && pip install --upgrade -r prerequisites.txt \
     && pip install -r requirements.txt
 
-COPY start.sh /start.sh
-COPY entrypoint.sh /entrypoint.sh
+COPY resources/docker-app/start.sh /start.sh
+COPY resources/docker-app/entrypoint.sh /entrypoint.sh

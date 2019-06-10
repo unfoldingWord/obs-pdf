@@ -9,3 +9,6 @@ __pycache__/
 /output/*
 /backup/*
 !.gitkeep
+
+.vscode
+
