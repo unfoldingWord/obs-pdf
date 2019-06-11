@@ -1,4 +1,3 @@
-#FROM phopper/obs-base:latest
 FROM unfoldingword/obs-base:latest
 
 # Which uWSGI .ini file should be used, to make it customizable
