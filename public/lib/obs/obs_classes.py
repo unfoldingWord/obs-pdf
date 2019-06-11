@@ -9,7 +9,7 @@ from lib.obs import chapters_and_frames
 
 
 
-class OBSStatus(object):
+class OBSStatus:
     def __init__(self, file_name=None):
         """
         Class constructor. Optionally accepts the name of a file to deserialize.
@@ -55,7 +55,7 @@ class OBSStatus(object):
 
 
 
-class OBSChapter(object):
+class OBSChapter:
 
     title_re = re.compile(r'^\s*#(.*?)#*\n', re.UNICODE)
     ref_re = re.compile(r'\n(_*.*?_*)\n*$', re.UNICODE)
@@ -151,6 +151,13 @@ class OBSChapter(object):
         # remove Windows line endings
         markdown = markdown.replace('\r\n', '\n')
 
+        # Handle exclamation marks
+        # TODO: This is a temporary fix
+        markdown = markdown.replace('![', 'PQRST')
+        markdown = markdown.replace('!', '.') # Why do they fail?
+        markdown = markdown.replace('PQRST', '![')
+
+
         # title: the first non-blank line is title if it starts with '#'
         match = OBSChapter.title_re.search(markdown)
         if match:
@@ -185,7 +192,7 @@ class OBSChapter(object):
 
 
 
-class OBS(object):
+class OBS:
 
     def __init__(self, file_name=None):
         """
@@ -233,11 +240,10 @@ class OBS(object):
                 obs_chapter = OBSChapter(chapter)
             errors = errors + obs_chapter.get_errors()
 
-        if len(errors) == 0:
-            print('No errors were found in the OBS data.')
-            return True
-        else:
-            return False
+        if errors: return False
+        # else:
+        print('No errors were found in the OBS data.')
+        return True
 
 
 
