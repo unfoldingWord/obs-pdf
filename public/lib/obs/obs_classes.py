@@ -173,7 +173,7 @@ class OBSChapter:
             if int(frame_match.group(1)) != chapter_number:
                 raise Exception(f"Expected chapter {chapter_number} but found {frame_match.group(1)}.")
 
-            frame_id = f'{frame_match.group(1)}-{frame_match.group(2)}')
+            frame_id = f'{frame_match.group(1)}-{frame_match.group(2)}'
             frame = {'id': frame_id,
                     'img': OBSChapter.img_url_template.format(frame_id),
                     'text': frame_match.group(3).strip()
