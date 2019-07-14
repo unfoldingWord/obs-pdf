@@ -8,9 +8,9 @@ https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications
 Unzip into /opt/obs/images
 
 https://cdn.door43.org/obs/jpg/obs-images-360px.zip
-https://unfoldingword.org/assets/img/uW-Level-1-128px.png
-https://unfoldingword.org/assets/img/uW-Level-2-128px.png
-https://unfoldingword.org/assets/img/uW-Level-3-128px.png
+<!-- https://unfoldingword.org/assets/img/uW-Level-1-128px.png -->
+<!-- https://unfoldingword.org/assets/img/uW-Level-2-128px.png -->
+<!-- https://unfoldingword.org/assets/img/uW-Level-3-128px.png -->
 <!-- https://cdn.door43.org/obs/jpg/uWOBSverticallogo1200w.png -->
 <!-- https://cdn.door43.org/obs/jpg/uWOBSverticallogo600w.png -->
 https://cdn.door43.org/obs/png/uW_OBS_Logo.png
