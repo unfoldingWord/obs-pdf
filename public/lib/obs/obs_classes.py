@@ -148,39 +148,39 @@ class OBSChapter:
         return_val = OBSChapter()
         return_val.number = str(chapter_number).zfill(2)
 
-        # remove Windows line endings
+        # Remove Windows line endings
         markdown = markdown.replace('\r\n', '\n')
 
 
-        # title: the first non-blank line is title if it starts with '#'
-        frame = OBSChapter.title_re.search(markdown)
-        if frame:
-            return_val.title = frame.group(1).strip()
-            markdown = markdown.replace(frame.group(0), str(''), 1)
+        # Title: the first non-blank line is title if it starts with '#'
+        title_match = OBSChapter.title_re.search(markdown)
+        if title_match:
+            return_val.title = title_match.group(1).strip()
+            markdown = markdown.replace(title_match.group(0), str(''), 1)
 
-        # ref
-        frame = OBSChapter.ref_re.search(markdown)
-        if frame:
-            return_val.ref = frame.group(1).strip()
-            markdown = markdown.replace(frame.group(0), str(''), 1)
+        # Ref
+        ref_match = OBSChapter.ref_re.search(markdown)
+        if ref_match:
+            return_val.ref = ref_match.group(1).strip()
+            markdown = markdown.replace(ref_match.group(0), str(''), 1)
 
-        # frames
-        for frame in OBSChapter.frame_re.finditer(markdown):
+        # Frames
+        for frame_match in OBSChapter.frame_re.finditer(markdown):
             # 1: chapter number
             # 2: frame number
             # 3: frame text
 
-            if int(frame.group(1)) != chapter_number:
-                raise Exception('Expected chapter {0} but found {1}.'.format(str(chapter_number), frame.group(1)))
+            if int(frame_match.group(1)) != chapter_number:
+                raise Exception(f"Expected chapter {chapter_number} but found {frame_match.group(1)}.")
 
-            frame_id = '{0}-{1}'.format(frame.group(1), frame.group(2))
+            frame_id = '{0}-{1}'.format(frame_match.group(1), frame_match.group(2))
 
-            frame = {'id': frame_id,
+            frame_match = {'id': frame_id,
                     'img': OBSChapter.img_url_template.format(frame_id),
-                    'text': frame.group(3).strip()
+                    'text': frame_match.group(3).strip()
                     }
 
-            return_val.frames.append(frame)
+            return_val.frames.append(frame_match)
 
         return return_val
 
