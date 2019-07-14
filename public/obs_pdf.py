@@ -37,7 +37,7 @@ def pdf_from_dcs():
         return Response(err_text, mimetype='text/plain')
 
     except Exception as e:
-        return Response(e, mimetype='text/plain')
+        return Response(str(e), mimetype='text/plain')
 
     return redirect(f'/output/{lang_code}/{pdf_file}', code=302)
 

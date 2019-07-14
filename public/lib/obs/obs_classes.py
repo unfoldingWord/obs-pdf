@@ -57,10 +57,10 @@ class OBSStatus:
 
 class OBSChapter:
 
-    title_re = re.compile(r'^\s*#(.*?)#*\n', re.UNICODE)
-    ref_re = re.compile(r'\n(_*.*?_*)\n*$', re.UNICODE)
-    frame_re = re.compile(r'!\[OBS Image\].*?obs-en-(\d\d)-(\d\d)\.jpg.*?\)\n([^!]*)', re.UNICODE)
-    img_url = 'https://cdn.door43.org/obs/jpg/360px/obs-en-{0}.jpg'
+    title_re = re.compile(r'^\s*#(.*?)#*\n')
+    ref_re = re.compile(r'\n(_*.*?_*)\n*$')
+    frame_re = re.compile(r'!\[OBS Image\].*?obs-en-(\d\d)-(\d\d)\.jpg.*?\)\n(.+?)(?=!\[|$)', re.DOTALL)
+    img_url_template = 'https://cdn.door43.org/obs/jpg/360px/obs-en-{0}.jpg'
 
 
     def __init__(self, json_obj=None):
@@ -151,24 +151,18 @@ class OBSChapter:
         # remove Windows line endings
         markdown = markdown.replace('\r\n', '\n')
 
-        # Handle exclamation marks
-        # TODO: This is a temporary fix
-        markdown = markdown.replace('![', 'PQRST')
-        markdown = markdown.replace('!', '.') # Why do they fail?
-        markdown = markdown.replace('PQRST', '![')
-
 
         # title: the first non-blank line is title if it starts with '#'
-        match = OBSChapter.title_re.search(markdown)
-        if match:
-            return_val.title = match.group(1).strip()
-            markdown = markdown.replace(match.group(0), str(''), 1)
+        frame = OBSChapter.title_re.search(markdown)
+        if frame:
+            return_val.title = frame.group(1).strip()
+            markdown = markdown.replace(frame.group(0), str(''), 1)
 
         # ref
-        match = OBSChapter.ref_re.search(markdown)
-        if match:
-            return_val.ref = match.group(1).strip()
-            markdown = markdown.replace(match.group(0), str(''), 1)
+        frame = OBSChapter.ref_re.search(markdown)
+        if frame:
+            return_val.ref = frame.group(1).strip()
+            markdown = markdown.replace(frame.group(0), str(''), 1)
 
         # frames
         for frame in OBSChapter.frame_re.finditer(markdown):
@@ -182,9 +176,9 @@ class OBSChapter:
             frame_id = '{0}-{1}'.format(frame.group(1), frame.group(2))
 
             frame = {'id': frame_id,
-                     'img': OBSChapter.img_url.format(frame_id),
-                     'text': frame.group(3).strip()
-                     }
+                    'img': OBSChapter.img_url_template.format(frame_id),
+                    'text': frame.group(3).strip()
+                    }
 
             return_val.frames.append(frame)
 
