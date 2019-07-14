@@ -173,14 +173,12 @@ class OBSChapter:
             if int(frame_match.group(1)) != chapter_number:
                 raise Exception(f"Expected chapter {chapter_number} but found {frame_match.group(1)}.")
 
-            frame_id = '{0}-{1}'.format(frame_match.group(1), frame_match.group(2))
-
-            frame_match = {'id': frame_id,
+            frame_id = f'{frame_match.group(1)}-{frame_match.group(2)}')
+            frame = {'id': frame_id,
                     'img': OBSChapter.img_url_template.format(frame_id),
                     'text': frame_match.group(3).strip()
                     }
-
-            return_val.frames.append(frame_match)
+            return_val.frames.append(frame)
 
         return return_val
 
@@ -193,7 +191,7 @@ class OBS:
         Class constructor. Optionally accepts the name of a file to deserialize.
         :param str file_name: The name of a file to deserialize into a OBS object
         """
-        # deserialize
+        # Deserialize
         if file_name:
             if os.path.isfile(file_name):
                 self.__dict__ = load_json_object(file_name)
