@@ -11,6 +11,11 @@ ENV STATIC_PATH /app/obs-pdf/output
 # Timeout in seconds for processing Flask requests
 ENV NGINX_TIMEOUT 300
 
+# Define environment variables
+# NOTE: The following environment variables are expected to be set for testing:
+#	AWS_ACCESS_KEY_ID
+#	AWS_SECRET_ACCESS_KEY
+
 # install the obs-pdf app
 RUN cd /app \
     && git clone --single-branch -b master https://github.com/unfoldingWord-dev/obs-pdf.git \
