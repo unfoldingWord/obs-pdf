@@ -61,7 +61,7 @@ def get_languages():
         alt: ["Afaraf", "Danakil"],
         lc: aa
       },
-      ...
+      …
     ]
     """
     url = 'http://td.unfoldingword.org/exports/langnames.json'
