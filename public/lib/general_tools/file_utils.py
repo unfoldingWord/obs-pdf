@@ -3,6 +3,7 @@ import json
 import os
 import zipfile
 import shutil
+from mimetypes import MimeTypes
 
 import yaml
 
@@ -104,6 +105,15 @@ def write_file(file_name, file_contents, indent=None, binary=False):
     else:
         with codecs.open(file_name, 'w', encoding='utf-8') as out_file:
             out_file.write(text_to_write)
+
+
+def get_mime_type(path):
+    mime = MimeTypes()
+
+    mime_type = mime.guess_type(path)[0]
+    if not mime_type:
+        mime_type = f'text/{os.path.splitext(path)[1]}'
+    return mime_type
 
 
 def copy_tree(src, dst, symlinks=False, ignore=None):
