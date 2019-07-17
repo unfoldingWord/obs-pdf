@@ -162,7 +162,7 @@ class S3Handler:
             Key=key,
             Body=binary,
             ContentType=content_type,
-            CacheControl='max-age={0}'.format(cache_time)
+            CacheControl=f'max-age={cache_time}'
         )
 
 

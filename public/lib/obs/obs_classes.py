@@ -1,8 +1,9 @@
-import regex as re
 from datetime import datetime
 import os
 from json import JSONEncoder
-from typing import List
+# from typing import List
+
+import regex as re
 
 from lib.general_tools.file_utils import load_json_object
 from lib.obs import chapters_and_frames
@@ -20,7 +21,7 @@ class OBSStatus:
             if os.path.isfile(file_name):
                 self.__dict__ = load_json_object(file_name)
             else:
-                raise IOError('The file {0} was not found.'.format(file_name))
+                raise IOError(f"The file '{file_name}' was not found.")
         else:
             self.checking_entity = ''
             self.checking_level = '1'
@@ -87,12 +88,12 @@ class OBSChapter:
         errors = []
 
         if not self.title:
-            msg = 'Title not found: {0}'.format(self.number)
+            msg = f"Title not found: {self.number}"
             print(msg)
             errors.append(msg)
 
         if not self.ref:
-            msg = 'Ref not found: {0}'.format(self.number)
+            msg = f"Ref not found: {self.number}"
             print(msg)
             errors.append(msg)
 
@@ -104,23 +105,23 @@ class OBSChapter:
         for x in range(1, expected_frame_count + 1):
 
             # frame id is formatted like '01-01'
-            frame_id = '{0}-{1}'.format(self.number.zfill(2), str(x).zfill(2))
+            frame_id = f'{self.number.zfill(2)}-{str(x).zfill(2)}'
 
             # get the next frame
             frame = next((f for f in self.frames if f['id'] == frame_id), None)  # type: dict
             if not frame:
-                msg = 'Frame not found: {0}'.format(frame_id)
+                msg = f"Frame not found: {frame_id}"
                 print(msg)
                 errors.append(msg)
             else:
                 # check the frame img and  values
                 if 'img' not in frame or not frame['img']:
-                    msg = 'Attribute "img" is missing for frame {0}'.format(frame_id)
+                    msg = f'Attribute "img" is missing for frame {frame_id}'
                     print(msg)
                     errors.append(msg)
 
                 if 'text' not in frame or not frame['text']:
-                    msg = 'Attribute "text" is missing for frame {0}'.format(frame_id)
+                    msg = f'Attribute "text" is missing for frame {frame_id}'
                     print(msg)
                     errors.append(msg)
 
@@ -171,12 +172,12 @@ class OBSChapter:
             # 3: frame text
 
             if int(frame_match.group(1)) != chapter_number:
-                raise Exception(f"Expected chapter {chapter_number} but found {frame_match.group(1)}.")
+                raise Exception(f"Expected chapter {chapter_number} but found '{frame_match.group(1)}'.")
 
             frame_id = f'{frame_match.group(1)}-{frame_match.group(2)}'
             frame = {'id': frame_id,
-                    'img': OBSChapter.img_url_template.format(frame_id),
-                    'text': frame_match.group(3).strip()
+                     'img': OBSChapter.img_url_template.format(frame_id),
+                     'text': frame_match.group(3).strip()
                     }
             return_val.frames.append(frame)
 
@@ -196,7 +197,7 @@ class OBS:
             if os.path.isfile(file_name):
                 self.__dict__ = load_json_object(file_name)
             else:
-                raise IOError('The file {0} was not found.'.format(file_name))
+                raise IOError(f"The file '{file_name}' was not found.")
         else:
             self.app_words = dict(cancel='Cancel',
                                   chapters='Chapters',
@@ -246,5 +247,6 @@ class OBSEncoder(JSONEncoder):
 
 
 class OBSError(Exception):
-    def __init__(self, msg: str):
-        super().__init__(msg)
+    pass
+    # def __init__(self, msg: str):
+        # super().__init__(msg)
