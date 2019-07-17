@@ -48,7 +48,7 @@ runDevDebug: checkEnvVariables
 	#	cd /
 	#	./start.sh
 	#
-	# conTeXt logs will be in /app/obs-pdf/output (context.err and context.out)
+	# conTeXt logs will be in /app/obs-pdf/output/ (context.err and context.out)
 	docker run --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --name obs-pdf --rm -p 8123:80 -it --cpus=0.5 unfoldingword/obs-pdf:develop bash
 
 runDebug: checkEnvVariables
@@ -56,7 +56,7 @@ runDebug: checkEnvVariables
 	#	cd /
 	#	./start.sh
 	#
-	# conTeXt logs will be in /app/obs-pdf/output (context.err and context.out)
+	# conTeXt logs will be in /app/obs-pdf/output/ (context.err and context.out)
 	# Also look in /tmp/obs-to-pdf/en-xxxx/make_pdf/en.log and en.tex
 	docker run --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --name obs-pdf -p 8123:80 -it unfoldingword/obs-pdf:debug bash
 
@@ -64,6 +64,8 @@ connectDebug:
 	# This will open another terminal view of the obs-pdf container (one of the two above)
 	#	that doesn't have all of the nginx logs scrolling past
 	#
-	# conTeXt logs will be in /app/obs-pdf/output (context.err and context.out)
+	# tail -f /tmp/last_output_msgs.txt
+	#	is convenient to watch (once that file exists)
+	# conTeXt logs will be in /app/obs-pdf/output/ (context.err and context.out)
 	# Also look in /tmp/obs-to-pdf/en-xxxx/make_pdf/en.log and en.tex
 	docker exec -it `docker inspect --format="{{.Id}}" obs-pdf` bash
