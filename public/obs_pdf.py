@@ -25,18 +25,29 @@ def pdf_from_dcs():
     if request.method != 'GET':
         return 'Bad Request', 400
 
-    lang_code = request.args.get('lang_code', '')
-    if not lang_code:
-        return 'Bad Request - no lang_code', 400
+    parameter = request.args.get('lang_code', '')
+    if parameter:
+        print(f"Starting to process OBS PDF request for Door43 Catalog language code '{parameter}'…")
+        parameter_type = 'Catalog_lang_code'
+    else:
+        parameter = request.args.get('repo', '')
+        if parameter:
+            if parameter.strip('/').count('/') == 1:
+                print(f"Starting to process OBS PDF request for Door43 repo '{parameter}'…")
+                parameter_type = 'Door43_repo'
+            else:
+                return 'Bad Request - invalid Door43 repo specification', 400
+        else: # can't find any valid parameter
+            return 'Bad Request - no lang_code or repo', 400
 
     try:
-        with PdfFromDcs(lang_code) as f:
+        with PdfFromDcs(parameter_type, parameter) as f:
             run_result = f.run()
 
     except ChildProcessError:
         err_text = 'AN ERROR OCCURRED GENERATING THE PDF\r\n\r\n'
         err_text += read_file(os.path.join(get_output_dir(), 'context.err'))
-        err_text += '\r\n\r\n\r\nFULL CONTEXT OUTPUT\r\n\r\n'
+        err_text += '\r\n\r\n\r\nFULL ConTeXt OUTPUT\r\n\r\n'
         err_text += read_file(os.path.join(get_output_dir(), 'context.out'))
         return Response(err_text, mimetype='text/plain')
 
@@ -45,7 +56,7 @@ def pdf_from_dcs():
 
     # return redirect(f'/output/{lang_code}/{pdf_file}', code=302)
     if run_result: # it should be the URL of the file on S3
-        return f'Success @ {run_result}', 200
+        return f'Success @ <a href="{run_result}">{run_result[8:]}</a>', 200
     # else:
     return 'PDF Build Error', 500
 # end of pdf_from_dcs()

@@ -7,7 +7,6 @@ import shutil
 import subprocess
 import time
 import os
-from os import path
 from os.path import isfile, isdir
 from typing import List
 import traceback
@@ -22,17 +21,36 @@ from lib.obs.obs_tex_export import OBSTexExport
 
 
 
+AWS_REGION_NAME = 'us-west-2'
+CDN_BUCKET_NAME = 'cdn.door43.org'
+CDN_FOLDER = 'obs/auto_PDFs' # Folder inside the CDN bucket
+# CDN_FOLDER = 'tx/job/auto_PDFs' # Folder inside the CDN bucket -- this one has 1-DAY AUTODELETE
+DOOR43_SITE = 'https://git.door43.org'
+
+
+
 class PdfFromDcs:
 
-    def __init__(self, lang_code: str):
-        self.lang_code = lang_code
-        self.download_dir = f'/tmp/obs-to-pdf/{lang_code}-{int(time.time())}'
+    def __init__(self, parameter_type: str, parameter: str):
+        self.parameter_type = parameter_type
+        self.parameter = parameter
         self.output_msg = ''
         self.output_msg_filepath = '/tmp/last_output_msgs.txt'
+        self.lang_code = self.given_repo_spec = None
+        if parameter_type == 'Catalog_lang_code':
+            self.lang_code = parameter
+        elif parameter_type == 'Door43_repo':
+            self.given_repo_spec = parameter.strip('/')
+            self.user_name, self.repo_name = self.given_repo_spec.split('/')
+        else:
+            err_msg = f"Unrecognized parameter type: '{parameter_type}'\n"
+            print(f"ERROR: {err_msg}")
+            self.output_msg += err_msg
+            write_file(self.output_msg_filepath, self.output_msg)
+            raise TypeError
+        self.download_dirpath = f"/tmp/obs-to-pdf/{parameter.replace('/','--')}-{int(time.time())}/"
 
         # AWS credentials -- get the secret ones from environment variables
-        self.cdn_bucket_name = 'cdn.door43.org'
-        self.aws_region_name = 'us-west-2'
         try:
             self.aws_access_key_id = os.environ['AWS_ACCESS_KEY_ID']
             self.aws_secret_access_key = os.environ['AWS_SECRET_ACCESS_KEY']
@@ -57,103 +75,117 @@ class PdfFromDcs:
     def run(self) -> str:
         """
         Clean up left-over files from any previous runs.
-        Download the uW Catalog and find the requested language.
+        If a language code is given,
+            download the uW Catalog and find the requested language.
+        Or if a repo user/repo_name is given,
+            skip that.
         Download the correct OBS zipped data.
             Unzip and check the OBS data.
         Call PdfFromDcs.create_pdf function to make the PDF
         """
+        self.output_msg += f"{datetime.datetime.now()} => Starting OBS PDF processing for '{self.parameter}'…\n"
+        write_file(self.output_msg_filepath, self.output_msg)
+
         # Clean up left-over files from any previous runs
         self.cleanup_files()
 
         # Initialize some variables
         today = ''.join(str(datetime.date.today()).rsplit(str('-'))[0:3])  # str(datetime.date.today())
-        self.download_dir = '/tmp/obs-to-pdf/{0}-{1}'.format(self.lang_code, int(time.time()))
-        make_dir(self.download_dir)
-        downloaded_file = f'{self.download_dir}/obs.zip'
+        # self.download_dir = '/tmp/obs-to-pdf/{0}-{1}'.format(self.lang_code, int(time.time()))
+        make_dir(self.download_dirpath)
+        downloaded_filepath = f'{self.download_dirpath}/obs.zip'
 
-        # Get the catalog
-        self.output_msg += f"{datetime.datetime.now()} => Downloading the catalog…\n"
+        if self.parameter_type == 'Catalog_lang_code':
+            # Get the catalog
+            self.output_msg += f"{datetime.datetime.now()} => Downloading the Door43 Catalog…\n"
+            write_file(self.output_msg_filepath, self.output_msg)
+            catalog = get_catalog()
+
+            # Find the language we need
+            langs = [l for l in catalog['languages'] if l['identifier'] == self.lang_code]  # type: dict
+
+            if not langs:
+                err_msg = f'Did not find "{self.lang_code}" in the catalog.'
+                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
+                write_file(self.output_msg_filepath, self.output_msg)
+                raise ValueError(err_msg)
+
+            if len(langs) > 1:
+                err_msg = f'Found more than one entry for "{self.lang_code}" in the catalog.'
+                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
+                write_file(self.output_msg_filepath, self.output_msg)
+                raise ValueError(err_msg)
+
+            lang_info = langs[0]  # type: dict
+
+            # 1. Get the zip file from the API
+            resources = [r for r in lang_info['resources'] if r['identifier'] == 'obs']  # type: dict
+
+            if not resources:
+                err_msg = f'Did not find an entry for "{self.lang_code}" OBS in the catalog.'
+                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
+                write_file(self.output_msg_filepath, self.output_msg)
+                raise ValueError(err_msg)
+
+            if len(resources) > 1:
+                err_msg = f'Found more than one entry for "{self.lang_code}" OBS in the catalog.'
+                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
+                write_file(self.output_msg_filepath, self.output_msg)
+                raise ValueError(err_msg)
+
+            resource = resources[0]  # type: dict
+
+            found_sources = []
+
+            for project in resource['projects']:
+                if project['formats']:
+                    urls = [f['url'] for f in project['formats']
+                            if 'application/zip' in f['format'] and 'text/markdown' in f['format']]
+
+                    if len(urls) > 1:
+                        err_msg = f'Found more than one zipped markdown entry for "{self.lang_code}" OBS in the catalog.'
+                        self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
+                        write_file(self.output_msg_filepath, self.output_msg)
+                        raise ValueError(err_msg)
+
+                    if len(urls) == 1:
+                        found_sources.append(urls[0])
+
+            if not found_sources:
+                err_msg = f'Did not find any zipped markdown entries for "{self.lang_code}" OBS in the catalog.'
+                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
+                write_file(self.output_msg_filepath, self.output_msg)
+                raise ValueError(err_msg)
+
+            if len(found_sources) > 1:
+                err_msg = f'Found more than one zipped markdown entry for "{self.lang_code}" OBS in the catalog.'
+                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
+                write_file(self.output_msg_filepath, self.output_msg)
+                raise ValueError(err_msg)
+
+            source_zip_url = found_sources[0]
+            source_dirpath = os.path.join(self.download_dirpath, f'{self.lang_code}_obs/')
+
+        elif self.parameter_type == 'Door43_repo':
+            source_zip_url = f'{DOOR43_SITE}/{self.given_repo_spec}/archive/master.zip'
+            source_dirpath = os.path.join(self.download_dirpath, self.repo_name)
+
+
+        # 2. Download then unzip
+        self.output_msg += f"{datetime.datetime.now()} => Downloading '{source_zip_url}'…\n"
         write_file(self.output_msg_filepath, self.output_msg)
-        catalog = get_catalog()
-
-        # Find the language we need
-        langs = [l for l in catalog['languages'] if l['identifier'] == self.lang_code]  # type: dict
-
-        if not langs:
-            err_msg = f'Did not find "{self.lang_code}" in the catalog.'
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
-            raise ValueError(err_msg)
-
-        if len(langs) > 1:
-            err_msg = f'Found more than one entry for "{self.lang_code}" in the catalog.'
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
-            raise ValueError(err_msg)
-
-        lang_info = langs[0]  # type: dict
-
-        # 1. Get the zip file from the API
-        resources = [r for r in lang_info['resources'] if r['identifier'] == 'obs']  # type: dict
-
-        if not resources:
-            err_msg = f'Did not find an entry for "{self.lang_code}" OBS in the catalog.'
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
-            raise ValueError(err_msg)
-
-        if len(resources) > 1:
-            err_msg = f'Found more than one entry for "{self.lang_code}" OBS in the catalog.'
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
-            raise ValueError(err_msg)
-
-        resource = resources[0]  # type: dict
-
-        found_sources = []
-
-        for project in resource['projects']:
-            if project['formats']:
-                urls = [f['url'] for f in project['formats']
-                        if 'application/zip' in f['format'] and 'text/markdown' in f['format']]
-
-                if len(urls) > 1:
-                    err_msg = f'Found more than one zipped markdown entry for "{self.lang_code}" OBS in the catalog.'
-                    self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-                    write_file(self.output_msg_filepath, self.output_msg)
-                    raise ValueError(err_msg)
-
-                if len(urls) == 1:
-                    found_sources.append(urls[0])
-
-        if not found_sources:
-            err_msg = f'Did not find any zipped markdown entries for "{self.lang_code}" OBS in the catalog.'
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
-            raise ValueError(err_msg)
-
-        if len(found_sources) > 1:
-            err_msg = f'Found more than one zipped markdown entry for "{self.lang_code}" OBS in the catalog.'
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
-            raise ValueError(err_msg)
-
-        source_zip = found_sources[0]
-
-        # 2. Unzip
-        download_file(source_zip, downloaded_file)
-        unzip(downloaded_file, self.download_dir)
+        download_file(source_zip_url, downloaded_filepath)
+        unzip(downloaded_filepath, self.download_dirpath)
 
         # 3. Check for valid repository structure
-        source_dir = os.path.join(self.download_dir, '{}_obs'.format(self.lang_code))
-        manifest_file = os.path.join(source_dir, 'manifest.yaml')
+        manifest_file = os.path.join(source_dirpath, 'manifest.yaml')
         if not isfile(manifest_file):
             err_msg = "Did not find manifest.json in the resource container"
             self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
             write_file(self.output_msg_filepath, self.output_msg)
             raise FileNotFoundError(err_msg)
 
-        content_dir = os.path.join(source_dir, 'content')
+        content_dir = os.path.join(source_dirpath, 'content')
         if not isdir(content_dir):
             err_msg = "Did not find the content directory in the resource container"
             self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
@@ -161,7 +193,7 @@ class PdfFromDcs:
             raise NotADirectoryError(err_msg)
 
         # 4. Read the manifest (status, version, localized name, etc)
-        self.output_msg += f"{datetime.datetime.now()} => Reading the manifest…\n"
+        self.output_msg += f"{datetime.datetime.now()} => Reading the '{self.parameter}' manifest…\n"
         write_file(self.output_msg_filepath, self.output_msg)
         manifest = load_yaml_object(manifest_file)
 
@@ -192,32 +224,29 @@ class PdfFromDcs:
 
         # 7. Front and back matter
         self.output_msg += f"{datetime.datetime.now()} => Reading the front and back matter…\n"
-        title_file = os.path.join(content_dir, 'front', 'title.md')
-        if not isfile(title_file):
+        title_filepath = os.path.join(content_dir, 'front', 'title.md')
+        if not isfile(title_filepath):
             err_msg = "Did not find the title file in the resource container"
             self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
             write_file(self.output_msg_filepath, self.output_msg)
             raise OBSError(err_msg)
+        obs_obj.title = read_file(title_filepath)
 
-        obs_obj.title = read_file(title_file)
-
-        front_file = os.path.join(content_dir, 'front', 'intro.md')
-        if not isfile(front_file):
+        front_filepath = os.path.join(content_dir, 'front', 'intro.md')
+        if not isfile(front_filepath):
             err_msg = "Did not find the front/intro.md file in the resource container"
             self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
             write_file(self.output_msg_filepath, self.output_msg)
             raise OBSError(err_msg)
+        obs_obj.front_matter = self.remove_trailing_hashes(read_file(front_filepath), 'front-matter')
 
-        obs_obj.front_matter = read_file(front_file)
-
-        back_file = os.path.join(content_dir, 'back', 'intro.md')
-        if not isfile(back_file):
+        back_filepath = os.path.join(content_dir, 'back', 'intro.md')
+        if not isfile(back_filepath):
             err_msg = "Did not find the back/intro.md file in the resource container"
             self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
             write_file(self.output_msg_filepath, self.output_msg)
             raise OBSError(err_msg)
-
-        obs_obj.back_matter = read_file(back_file)
+        obs_obj.back_matter = self.remove_trailing_hashes(read_file(back_filepath), 'back-matter')
 
         return self.create_pdf(obs_obj)
     # end of PdfFromDcs.run()
@@ -235,23 +264,23 @@ class PdfFromDcs:
             self.output_msg += f"{datetime.datetime.now()} => Beginning PDF generation…\n"
             write_file(self.output_msg_filepath, self.output_msg)
 
-            out_dir = os.path.join(self.download_dir, 'make_pdf')
+            out_dir = os.path.join(self.download_dirpath, 'make_pdf')
             make_dir(out_dir)
 
             obs_lang_code = obs_obj.language
 
             # make sure the noto language file exists
-            noto_file = path.join(get_resources_dir(), 'tex', 'noto-{0}.tex'.format(obs_lang_code))
+            noto_file = os.path.join(get_resources_dir(), 'tex', 'noto-{0}.tex'.format(obs_lang_code))
             if not isfile(noto_file):
-                shutil.copy2(path.join(get_resources_dir(), 'tex', 'noto-en.tex'), noto_file)
+                shutil.copy2(os.path.join(get_resources_dir(), 'tex', 'noto-en.tex'), noto_file)
 
             # generate a tex file
             self.output_msg += f"{datetime.datetime.now()} => Generating TeX file…\n"
             write_file(self.output_msg_filepath, self.output_msg)
-            tex_file = os.path.join(out_dir, '{0}.tex'.format(obs_lang_code))
+            tex_file = os.path.join(out_dir, f'{obs_lang_code}.tex')
 
             # make sure it doesn't already exist
-            if os.path.isfile(tex_file):
+            if isfile(tex_file):
                 os.remove(tex_file)
 
             with OBSTexExport(obs_obj, tex_file, 0, '360px') as tex:
@@ -282,7 +311,7 @@ class PdfFromDcs:
             if isfile(err_log_path):
                 os.unlink(err_log_path)
 
-            self.output_msg += f"{datetime.datetime.now()} => Running ConTeXt - this may take several minutes…\n"
+            self.output_msg += f"{datetime.datetime.now()} => Running ConTeXt -- this may take several minutes…\n"
             write_file(self.output_msg_filepath, self.output_msg)
             try:
                 std_out = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, cwd=out_dir)
@@ -322,7 +351,9 @@ class PdfFromDcs:
             version = obs_obj.version.replace('.', '_')
             if version[0:1] != 'v':
                 version = f'v{version}'
-            pdf_desired_name = f'obs-{obs_lang_code}-{version}.pdf'
+            pdf_desired_name = f'obs-Catalog_{obs_lang_code}--{version}.pdf' \
+                                    if self.parameter_type == 'Catalog_lang_code' \
+                            else f'{self.user_name}_obs-{obs_lang_code}--{version}.pdf'
 
             # Copy the new PDF file to the /app/obs-pdf/output/{obs_lang_code}/ folder
             # self.output_msg += f"{datetime.datetime.now()} => Copying the '{obs_lang_code}' PDF file to output directory…\n"
@@ -336,17 +367,17 @@ class PdfFromDcs:
             # shutil.copyfile(pdf_current_filepath, pdf_destination_filepath)
 
             # Upload the PDF to our AWS S3 bucket
-            self.output_msg += f"{datetime.datetime.now()} => Uploading the '{obs_lang_code}' PDF file to S3 bucket…\n"
+            self.output_msg += f"{datetime.datetime.now()} => Uploading '{pdf_desired_name}' to S3 {CDN_BUCKET_NAME}…\n"
             write_file(self.output_msg_filepath, self.output_msg)
-            cdn_s3_handler = S3Handler(bucket_name=self.cdn_bucket_name,
+            cdn_s3_handler = S3Handler(bucket_name=CDN_BUCKET_NAME,
                                        aws_access_key_id=self.aws_access_key_id,
                                        aws_secret_access_key=self.aws_secret_access_key,
-                                       aws_region_name=self.aws_region_name)
-            s3_commit_key = f'obs/auto_PDFs/{pdf_desired_name}'
+                                       aws_region_name=AWS_REGION_NAME)
+            s3_commit_key = f'{CDN_FOLDER}/{pdf_desired_name}'
             cdn_s3_handler.upload_file(pdf_current_filepath, s3_commit_key)
 
             # return pdf_desired_name
-            return f'https://{self.cdn_bucket_name}/{s3_commit_key}'
+            return f'https://{CDN_BUCKET_NAME}/{s3_commit_key}'
 
         except Exception as e:
             err_msg = f"Exception in create_pdf: {e}: {traceback.format_exc()}\n"
@@ -363,7 +394,24 @@ class PdfFromDcs:
     # end of PdfFromDcs.create_pdf function
 
 
-    def cleanup_files(self):
+    @staticmethod
+    def remove_trailing_hashes(given_text: str, optional_description=None) -> str:
+        """
+        Adjust markdown text to remove any trailing hashes (they irritate ConTeXt)
+        """
+        adjusted_description = f'{optional_description} ' if optional_description else ''
+        new_lines = []
+        for line in given_text.split('\n'):
+            new_line = line.rstrip(' #') # Strips all of these characters at the end of the line
+            if new_line != line:
+                print(f"Stripped {adjusted_description}line '{line}' to '{new_line}'")
+            new_lines.append(new_line)
+        return '\n'.join(new_lines)
+    # end of PdfFromDcs.remove_trailing_hashes static function
+
+
+    @staticmethod
+    def cleanup_files():
         """
         In order to keep running in a Docker container,
             we don't want to accumulate left-over files
@@ -372,7 +420,7 @@ class PdfFromDcs:
         """
         remove_tree('/app/obs-pdf/output/')
         remove_tree('/tmp/obs-to-pdf/')
-    # end of PdfFromDcs.cleanup_files()
+    # end of PdfFromDcs.cleanup_files() static function
 
 
     @staticmethod
