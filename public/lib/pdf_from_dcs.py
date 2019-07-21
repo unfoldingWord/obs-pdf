@@ -351,9 +351,10 @@ class PdfFromDcs:
             version = obs_obj.version.replace('.', '_')
             if version[0:1] != 'v':
                 version = f'v{version}'
-            pdf_desired_name = f'obs-Catalog_{obs_lang_code}--{version}.pdf' \
+            # TODO: We might want to adjust this once things become more final
+            pdf_desired_name = f'Catalog--{obs_lang_code}_obs-{version}.pdf' \
                                     if self.parameter_type == 'Catalog_lang_code' \
-                            else f'{self.user_name}_obs-{obs_lang_code}--{version}.pdf'
+                            else f'{self.user_name}--{obs_lang_code}_obs-{version}.pdf'
 
             # Copy the new PDF file to the /app/obs-pdf/output/{obs_lang_code}/ folder
             # self.output_msg += f"{datetime.datetime.now()} => Copying the '{obs_lang_code}' PDF file to output directory…\n"
