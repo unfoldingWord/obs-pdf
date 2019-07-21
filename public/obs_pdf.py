@@ -51,8 +51,9 @@ def pdf_from_dcs():
         err_text += read_file(os.path.join(get_output_dir(), 'context.out'))
         return Response(err_text, mimetype='text/plain')
 
-    except Exception as e:
-        return Response(e, mimetype='text/plain')
+    except Exception as e: # all other exceptions
+        print(f"Got an EXCEPTION: {e}") # Show exception string in console
+        return Response(str(e), mimetype='text/plain') # Return exception string to user
 
     # return redirect(f'/output/{lang_code}/{pdf_file}', code=302)
     if run_result: # it should be the URL of the file on S3
