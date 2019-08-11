@@ -27,13 +27,13 @@ def pdf_from_dcs():
 
     parameter = request.args.get('lang_code', '')
     if parameter:
-        print(f"Starting to process OBS PDF request for Door43 Catalog language code '{parameter}'…")
+        print(f"\n\nStarting to process OBS PDF request for Door43 Catalog language code '{parameter}'…")
         parameter_type = 'Catalog_lang_code'
     else:
         parameter = request.args.get('repo', '')
         if parameter:
             if parameter.strip('/').count('/') == 1:
-                print(f"Starting to process OBS PDF request for Door43 repo '{parameter}'…")
+                print(f"\n\nStarting to process OBS PDF request for Door43 repo '{parameter}'…")
                 parameter_type = 'Door43_repo'
             else:
                 return 'Bad Request - invalid Door43 repo specification', 400

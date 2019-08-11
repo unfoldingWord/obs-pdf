@@ -24,7 +24,7 @@ class OBSStatus:
                 raise IOError(f"The file '{file_name}' was not found.")
         else:
             self.checking_entity = ''
-            self.checking_level = '1'
+            # self.checking_level = '1'
             self.comments = ''
             self.contributors = ''
             self.publish_date = datetime.today().strftime('%Y-%m-%d')
@@ -44,7 +44,7 @@ class OBSStatus:
         manifest_status = manifest['status']
 
         status.checking_entity = ', '.join(manifest_status['checking_entity'])
-        status.checking_level = manifest_status['checking_level']
+        # status.checking_level = manifest_status['checking_level']
         status.comments = manifest_status['comments']
         status.contributors = ', '.join(manifest_status['contributors'])
         status.publish_date = manifest_status['pub_date']
@@ -212,10 +212,12 @@ class OBS:
                                   select_a_language='Select a Language')
             self.chapters = []
             self.date_modified = datetime.today().strftime('%Y%m%d')
-            self.direction = 'ltr'
-            self.language = ''
+            self.language_direction = 'ltr'
+            self.language_id = ''
+            self.language_name = ''
             self.title = ''
-            self.checking_level = ''
+            self.publisher = ''
+            # self.checking_level = ''
             self.version = ''
             self.status = ''
             self.front_matter = ''
@@ -248,5 +250,3 @@ class OBSEncoder(JSONEncoder):
 
 class OBSError(Exception):
     pass
-    # def __init__(self, msg: str):
-        # super().__init__(msg)

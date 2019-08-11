@@ -7,13 +7,13 @@
          v=\the\vsize<\the\textheight> @}
 \message{FINAL, SIZE: \the\useFontSZ, SKIP: \the\useBaseSkip, VSIZE: \the\vsize, NEED: \the\need, img=\the\imgneed, txt=\the\txtneed, ref=\the\refneed@}
 \ifdim \vsize < \the\need \relax
-    \message{WARNING: No room (\the\leftover) for both frames on page \the\pageno , in <<<[language]>>> version@}
+    \message{WARNING: No room (\the\leftover) for both frames on page \the\pageno , in <<<[language_id]>>> version@}
     % This makes the lines closer together in order to not have text off the bottom of the page
     \useBaseSkip=\dimexpr 0.90 \useBaseSkip \relax % this is a last-ditch patch to try to make it fit
     \leftover=0.0pt
 \fi
 \ifdim \vsize < \dimexpr \the\need + \the\MiscTare \relax \relax
-    \message{WARNING: No room (\the\leftover) for both frames on page \the\pageno , in <<<[language]>>> version@}
+    \message{WARNING: No room (\the\leftover) for both frames on page \the\pageno , in <<<[language_id]>>> version@}
     % This makes the lines closer together in order to not have text off the bottom of the page
     \useBaseSkip=\dimexpr 0.90 \useBaseSkip \relax % this is a last-ditch patch to try to make it fit
     \leftover=0.0pt

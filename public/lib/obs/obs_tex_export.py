@@ -3,6 +3,7 @@ import os
 import regex as re
 import sys
 from string import Template
+import logging
 
 from lib.general_tools.app_utils import get_resources_dir
 from lib.general_tools.file_utils import write_file
@@ -24,82 +25,85 @@ class OBSTexExport(object):
     clickableTextLink_re = r'{\\underbar{{\\goto{\1}[url(\2)]}}}'
 
     # DocuWiki markup patterns
-    matchRemoveDummyTokenPat = re.compile(r"===!!!===", re.UNICODE)
-    matchSingleTokenPat = re.compile(r"^\s*(\S+)\s*$", re.UNICODE)
-    matchSectionPat = re.compile(r"==+\s*(.*?)\s*==+", re.UNICODE)
-    matchBoldPat = re.compile(r"[*][*]\s*(.*?)\s*[*][*]", re.UNICODE)
-    matchItalicPat = re.compile(r"(?:\A|[^:])//\s*(.*?)\s*//", re.UNICODE)
-    matchUnderLinePat = re.compile(r"__\s*(.*?)\s*__", re.UNICODE)
-    matchMonoPat = re.compile(r"[\'][\']\s*(.*?)\s*[\'][\']", re.UNICODE)
-    matchRedPat = re.compile(r"<red>\s*(.*?)\s*</red>", re.UNICODE)
-    matchMagentaPat = re.compile(r"<mag[enta]*>\s*(.*?)\s*</mag[enta]*>", re.UNICODE)
-    matchBluePat = re.compile(r"<blue>\s*(.*?)\s*</blue>", re.UNICODE)
-    matchGreenPat = re.compile(r"<green>\s*(.*?)\s*</green>", re.UNICODE)
-    matchHeadingFourLevelPat = re.compile(r"(\A|[^=])====+\s*(.*?)\s*===+?([^=]|\Z)", re.UNICODE)
-    matchHeadingThreeLevelPat = re.compile(r"(\A|[^=])===+\s*(.*?)\s*==+?([^=]|\Z)", re.UNICODE)
-    matchHeadingTwoLevelPat = re.compile(r"(\A|[^=])==+\s*(.*?)\s*==+?([^=]|\Z)", re.UNICODE)
-    matchHeadingOneLevelPat = re.compile(r"(\A|[^=])=+\s*(.*?)\s*=+?([^=]|\Z)", re.UNICODE)
+    matchRemoveDummyTokenPattern = re.compile(r"===!!!===")
+    matchSingleTokenPattern = re.compile(r"^\s*(\S+)\s*$")
+    matchSectionPattern = re.compile(r"==+\s*(.*?)\s*==+")
+    matchBoldPattern = re.compile(r"[*][*]\s*(.*?)\s*[*][*]")
+    matchItalicPattern = re.compile(r"(?:\A|[^:])//\s*(.*?)\s*//")
+    matchUnderLinePattern = re.compile(r"__\s*(.*?)\s*__")
+    matchMonoPattern = re.compile(r"[\'][\']\s*(.*?)\s*[\'][\']")
+    matchRedPattern = re.compile(r"<red>\s*(.*?)\s*</red>")
+    matchMagentaPattern = re.compile(r"<mag[enta]*>\s*(.*?)\s*</mag[enta]*>")
+    matchBluePattern = re.compile(r"<blue>\s*(.*?)\s*</blue>")
+    matchGreenPattern = re.compile(r"<green>\s*(.*?)\s*</green>")
+    matchHeadingFourLevelPattern = re.compile(r"(\A|[^=])====+\s*(.*?)\s*===+?([^=]|\Z)")
+    matchHeadingThreeLevelPattern = re.compile(r"(\A|[^=])===+\s*(.*?)\s*==+?([^=]|\Z)")
+    matchHeadingTwoLevelPattern = re.compile(r"(\A|[^=])==+\s*(.*?)\s*==+?([^=]|\Z)")
+    matchHeadingOneLevelPattern = re.compile(r"(\A|[^=])=+\s*(.*?)\s*=+?([^=]|\Z)")
 
-    markdownH1_re = re.compile(r'^(\s*)#\s*([^#]+[^\s])(\s*#)*([^#]|\Z)', re.UNICODE)
-    markdownH2_re = re.compile(r'^(\s*)##\s*([^#]+[^\s])(\s*##)*([^#]|\Z)', re.UNICODE)
-    markdownH3_re = re.compile(r'^(\s*)###\s*([^#]+[^\s])(\s*###)*([^#]|\Z)', re.UNICODE)
-    markdownH4_re = re.compile(r'^(\s*)####\s*([^#]+[^\s])(\s*####)*([^#]|\Z)', re.UNICODE)
-    markdownBold_re = re.compile(r'(\A|\s+)[_][_]\s*(.*?)\s*[_][_](\Z|\s+)', re.UNICODE)
-    markdownItalic_re = re.compile(r'(\A|\s+)[_]\s*(.*?)\s*[_](\Z|\s+)', re.UNICODE)
-    markdownTextURL_re = re.compile(r'\[(.+?)\]\(((?:https://|http://)(?:[^\[\])]+))\)', re.UNICODE)
-    markdownLongTextURL_re = re.compile(r'\[(.+?)\]\(((?:https://|http://)(?:[^\[\])]{41,}))\)', re.UNICODE)
-    markdownURL_re = re.compile(r'(?<!([\[(]))https*://[^\s>]+', re.UNICODE)
+    markdownH1_re = re.compile(r'^(\s*)#\s*([^#]+[^\s])(\s*#)*([^#]|\Z)')
+    markdownH2_re = re.compile(r'^(\s*)##\s*([^#]+[^\s])(\s*##)*([^#]|\Z)')
+    markdownH3_re = re.compile(r'^(\s*)###\s*([^#]+[^\s])(\s*###)*([^#]|\Z)')
+    markdownH4_re = re.compile(r'^(\s*)####\s*([^#]+[^\s])(\s*####)*([^#]|\Z)')
+    markdownBold_re = re.compile(r'(\A|\s+)[_][_]\s*(.*?)\s*[_][_](\Z|\s+)')
+    markdownItalic_re = re.compile(r'(\A|\s+)[_]\s*(.*?)\s*[_](\Z|\s+)')
+    markdownTextURL_re = re.compile(r'\[(.+?)\]\(((?:https://|http://)(?:[^\[\])]+))\)')
+    markdownLongTextURL_re = re.compile(r'\[(.+?)\]\(((?:https://|http://)(?:[^\[\])]{41,}))\)')
+    markdownURL_re = re.compile(r'(?<!([\[(]))https*://[^\s>]+')
 
-    matchSubScriptPat = re.compile(r"<sub>\s*(.*?)\s*</sub>", re.UNICODE)
-    matchSuperScriptPat = re.compile(r"<sup>\s*(.*?)\s*</sup>", re.UNICODE)
-    matchStrikeOutPat = re.compile(r"<del>\s*(.*?)\s*</del>", re.UNICODE)
+    matchSubScriptPattern = re.compile(r"<sub>\s*(.*?)\s*</sub>")
+    matchSuperScriptPattern = re.compile(r"<sup>\s*(.*?)\s*</sup>")
+    matchStrikeOutPattern = re.compile(r"<del>\s*(.*?)\s*</del>")
 
-    matchPipePat = re.compile(r"(\|)", re.UNICODE)
+    matchPipePattern = re.compile(r"(\|)")
     # DocuWiki markup patterns applied only to front and back matter
-    matchBulletPat = re.compile(r"^\s*[*]\s+(.*)$", re.UNICODE)
+    matchBulletPattern = re.compile(r"^\s*[*]\s+(.*)$")
     # Miscellaneous markup patterns
-    matchChaptersPat = re.compile(r"===CHAPTERS===", re.UNICODE)
-    matchFrontMatterAboutPat = re.compile(r"===FRONT\.MATTER\.ABOUT===", re.UNICODE)
-    matchFrontMatterlicensePat = re.compile(r"===FRONT\.MATTER\.LICENSE===", re.UNICODE)
-    matchBackMatterPat = re.compile(r"===BACK\.MATTER===", re.UNICODE)
-    matchMiscPat = re.compile(r"<<<[\[]([^<>=]+)[\]]>>>", re.UNICODE)
+    matchTitleLogoPattern = re.compile(r"===TITLE\.LOGO===")
+    matchFrontMatterAboutPattern = re.compile(r"===FRONT\.MATTER\.ABOUT===")
+    matchFrontMatterlicensePattern = re.compile(r"===FRONT\.MATTER\.LICENSE===")
+    matchChaptersPattern = re.compile(r"===CHAPTERS===")
+    matchBackMatterPattern = re.compile(r"===BACK\.MATTER===")
+    matchMiscPattern = re.compile(r"<<<[\[]([^<>=]+)[\]]>>>")
     # Other patterns
     NBSP = '~'  # non-breaking 1-en space
     NBKN = '\\,\\,\\,'  # Three kerns in a row, non-breaking space
     NBHY = '\u2012'  # non-breaking hyphen
-    matchColonSemicolonNotAfterDigits = re.compile(r"([^\d\s])\s*([:;])\s*([^\s])", re.UNICODE)
-    matchCommaBetweenDigits = re.compile(r"(\d)\s*([,])\s*(\d)", re.UNICODE)
-    matchHyphen = re.compile(r"[-\u2010\u2012\u2013\uFE63]", re.UNICODE)
-    matchHyphenEM = re.compile(r"[\u2014\uFE58]", re.UNICODE)
-    matchAlphaNumSpaceThenNumber = re.compile(r"(\w)\s+(\d)", re.UNICODE)
-    # matchAlphaNum = re.compile(r"[A-Za-z0-9]", re.UNICODE)
-    matchSignificantTex = re.compile(r"[A-Za-z0-9\\{}\[\]]", re.UNICODE)
-    matchBlankLinePat = re.compile(r"^\s*$", re.UNICODE)
+    matchColonSemicolonNotAfterDigits = re.compile(r"([^\d\s])\s*([:;])\s*([^\s])")
+    matchCommaBetweenDigits = re.compile(r"(\d)\s*([,])\s*(\d)")
+    matchHyphen = re.compile(r"[-\u2010\u2012\u2013\uFE63]")
+    matchHyphenEM = re.compile(r"[\u2014\uFE58]")
+    matchAlphaNumSpaceThenNumber = re.compile(r"(\w)\s+(\d)")
+    # matchAlphaNum = re.compile(r"[A-Za-z0-9]")
+    matchSignificantTex = re.compile(r"[A-Za-z0-9\\{}\[\]]")
+    matchBlankLinePattern = re.compile(r"^\s*$")
 
-    matchOrdinalBookSpaces = re.compile(r"([123](|\.|\p{L}]{1,3}))\s", re.UNICODE)
-    matchChapterVersePat = re.compile(r"\s+(\d+:\d+)", re.UNICODE)
+    matchOrdinalBookSpaces = re.compile(r"([123](|\.|\p{L}]{1,3}))\s")
+    matchChapterVersePattern = re.compile(r"\s+(\d+:\d+)")
 
     # endregion
 
 
-    def __init__(self, obs_obj, out_path, max_chapters, img_res):
+    def __init__(self, obs_obj, out_path, max_chapters, img_res) -> None:
         """
 
         :type obs_obj: app.obs.obs_classes.OBS
         """
-        self.lang = obs_obj.language
-        self.lang_direction = obs_obj.direction
+        self.language_id = obs_obj.language_id
+        self.language_name = obs_obj.language_name
+        self.language_direction = obs_obj.language_direction
         self.out_path = out_path
         self.max_chapters = max_chapters
         self.img_res = img_res
-        self.checking_level = obs_obj.checking_level
+        # self.checking_level = obs_obj.checking_level
         self.title = obs_obj.title
+        self.publisher = obs_obj.publisher
         self.front_matter = obs_obj.front_matter
         self.back_matter = obs_obj.back_matter
         self.body_json = {'chapters': obs_obj.chapters,
-                          'language': self.lang,
-                          'direction': self.lang_direction,
-                          'checkinglevel': self.checking_level,
+                          'language_id': self.language_id,
+                          'language_direction': self.language_direction,
+                        #   'checking_level': self.checking_level,
                           'toctitle': self.title}
 
         self.num_items = 0
@@ -109,11 +113,11 @@ class OBSTexExport(object):
         return self
 
     # noinspection PyUnusedLocal
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         pass
 
 
-    def check_for_standard_keys_json(self):
+    def check_for_standard_keys_json(self) -> None:
 
         # ------------------------------  header/footer spacing and body font-face
 
@@ -130,16 +134,22 @@ class OBSTexExport(object):
         # this is for production but does not seem to work for Russian
         if 'fontstyle' not in self.body_json.keys():
             self.body_json['fontstyle'] = 'sans'
-        if 'direction' not in self.body_json.keys():
-            self.body_json['direction'] = 'ltr'  # Use 'rtl' for Arabic, Farsi, etc.
+        # if 'language_direction' not in self.body_json.keys():
+        #     self.body_json['language_direction'] = 'ltr'  # Use 'rtl' for Arabic, Farsi, etc.
+
+        # ------------------------------  Front/back font size and baseline
+        if 'front_align' not in self.body_json.keys():
+            self.body_json['front_align'] = 'flushleft'
+        if 'back_align' not in self.body_json.keys():
+            self.body_json['back_align'] = 'flushleft'
 
         # ------------------------------  Body font size and baseline
         if 'bodysize' not in self.body_json.keys():
             self.body_json['bodysize'] = '10.0pt'
         if 'bodybaseline' not in self.body_json.keys():
             self.body_json['bodybaseline'] = '12.0pt'
-        if 'bodyalign' not in self.body_json.keys():
-            self.body_json['bodyalign'] = 'width'
+        if 'body_align' not in self.body_json.keys():
+            self.body_json['body_align'] = 'width'
 
         # ------------------------------  Body font adjusted sizes
         if 'tfasize' not in self.body_json.keys():
@@ -170,18 +180,22 @@ class OBSTexExport(object):
             self.body_json['licbaseline'] = '9pt'
         if 'tocperpage' not in self.body_json.keys():
             self.body_json['tocperpage'] = '26'
-        if 'checkinglevel' not in self.body_json.keys():
-            self.body_json['checkinglevel'] = self.checking_level
+        # if 'checking_level' not in self.body_json.keys():
+        #     self.body_json['checking_level'] = self.checking_level
 
 
-    def another_replace(self, match_obj):
+    def another_replace(self, match_obj) -> str:
         keyword = match_obj.group(1)
         if keyword in self.body_json.keys():
             return self.body_json[keyword]
+        adjusted_string = match_obj.string.lstrip() # Get rid of indent
+        logger = logging.info if adjusted_string.startswith('%') \
+                    else logging.error
+        logger(f"Returning 'nothing' for '{keyword}' from '{adjusted_string}'")
         return 'nothing'
 
 
-    def tex_load_snippet_file(self, xtr, entry_name):
+    def tex_load_snippet_file(self, xtr, entry_name) -> str:
 
         if not os.path.isdir(OBSTexExport.snippets_dir):
             raise IOError('Path not found: {0}'.format(OBSTexExport.snippets_dir))
@@ -194,7 +208,7 @@ class OBSTexExport(object):
 
         occurs = 1
         while occurs > 0:
-            (return_val, occurs) = OBSTexExport.matchMiscPat.subn(self.another_replace, return_val,
+            (return_val, occurs) = OBSTexExport.matchMiscPattern.subn(self.another_replace, return_val,
                                                                   OBSTexExport.MATCH_ALL)
         each = return_val.split('\n')
         while not OBSTexExport.matchSignificantTex.search(each[-1]):
@@ -204,12 +218,7 @@ class OBSTexExport(object):
 
 
     def get_title(self, text):
-
-        if self.lang_direction == 'rtl':
-            text_dir = 'TRT'
-        else:
-            text_dir = 'TLT'
-        return '    \\startmakeup\\textdir {0}\\section{{{1}}}\\stopmakeup'.format(text_dir, text)
+        return f"    \\startmakeup\\textdir {'TRT' if self.language_direction=='rtl' else 'TLT'}\\section{{{text}}}\\stopmakeup"
 
 
     @staticmethod
@@ -246,7 +255,7 @@ class OBSTexExport(object):
 
     def get_ref(self, place_ref_template, text):
 
-        if self.body_json['direction'] == 'rtl':
+        if self.body_json['language_direction'] == 'rtl':
             pardir = 'TRT'
         else:
             pardir = 'TLT'
@@ -257,10 +266,10 @@ class OBSTexExport(object):
     @staticmethod
     def filter_apply_docuwiki_start(single_line):
         # Order is important here
-        single_line = OBSTexExport.matchHeadingFourLevelPat.sub(r'\1{\\bfd \2}\3', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchHeadingThreeLevelPat.sub(r'\1{\\bfc \2}\3', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchHeadingTwoLevelPat.sub(r'\1{\\bfb \2}\3', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchHeadingOneLevelPat.sub(r'\1{\\bfa \2}\3', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchHeadingFourLevelPattern.sub(r'\1{\\bfd \2}\3', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchHeadingThreeLevelPattern.sub(r'\1{\\bfc \2}\3', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchHeadingTwoLevelPattern.sub(r'\1{\\bfb \2}\3', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchHeadingOneLevelPattern.sub(r'\1{\\bfa \2}\3', single_line, OBSTexExport.MATCH_ALL)
 
         single_line = OBSTexExport.markdownH4_re.sub(r'\1{\\bfd \2}\3', single_line, OBSTexExport.MATCH_ALL)
         single_line = OBSTexExport.markdownH3_re.sub(r'\1{\\bfc \2}\3', single_line, OBSTexExport.MATCH_ALL)
@@ -268,21 +277,21 @@ class OBSTexExport(object):
         single_line = OBSTexExport.markdownH1_re.sub(r'\1{\\bfa \2}\3', single_line, OBSTexExport.MATCH_ALL)
 
         # Just boldface for stories
-        single_line = OBSTexExport.matchSectionPat.sub(r'{\\bf \1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchSectionPattern.sub(r'{\\bf \1}', single_line, OBSTexExport.MATCH_ALL)
 
-        single_line = OBSTexExport.matchBoldPat.sub(r'{\\bf \1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchBoldPattern.sub(r'{\\bf \1}', single_line, OBSTexExport.MATCH_ALL)
 
         # The \/ is an end-of-italic correction to add extra whitespace
-        single_line = OBSTexExport.matchItalicPat.sub(r'{\\em \1\/}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchUnderLinePat.sub(r'\\underbar{\1}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchMonoPat.sub(r'{\\tt \1}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchRedPat.sub(r'\\color[middlered]{\1}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchMagentaPat.sub(r'\\color[magenta]{\1}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchBluePat.sub(r'\\color[blue]{\1}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchGreenPat.sub(r'\\color[middlegreen]{\1}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchSubScriptPat.sub(r'\\low{\1}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchSuperScriptPat.sub(r'\\high{\1}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchStrikeOutPat.sub(r'\\overstrike{\1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchItalicPattern.sub(r'{\\em \1\/}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchUnderLinePattern.sub(r'\\underbar{\1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchMonoPattern.sub(r'{\\tt \1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchRedPattern.sub(r'\\color[middlered]{\1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchMagentaPattern.sub(r'\\color[magenta]{\1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchBluePattern.sub(r'\\color[blue]{\1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchGreenPattern.sub(r'\\color[middlegreen]{\1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchSubScriptPattern.sub(r'\\low{\1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchSuperScriptPattern.sub(r'\\high{\1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchStrikeOutPattern.sub(r'\\overstrike{\1}', single_line, OBSTexExport.MATCH_ALL)
 
         single_line = OBSTexExport.markdownItalic_re.sub(r'\1{\\em \2\/}\3', single_line, OBSTexExport.MATCH_ALL)
         single_line = OBSTexExport.markdownBold_re.sub(r'\1{\\bf \2}\3', single_line, OBSTexExport.MATCH_ALL)
@@ -292,8 +301,8 @@ class OBSTexExport(object):
 
     @staticmethod
     def filter_apply_docuwiki_finish(single_line):
-        single_line = OBSTexExport.matchPipePat.sub(r'\\textbar{}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchRemoveDummyTokenPat.sub(r'', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchPipePattern.sub(r'\\textbar{}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchRemoveDummyTokenPattern.sub(r'', single_line, OBSTexExport.MATCH_ALL)
         return single_line
 
 
@@ -319,11 +328,10 @@ class OBSTexExport(object):
         return single_line
 
 
-    def export_matter(self, lang_message, test):
+    def export_matter(self, lang_message:str, test:bool) -> str:
         """
         Exports JSON front/back matter to specified format.
         """
-        j = '\n'
         split = lang_message.split('\n')
         matter = []
         if test:
@@ -344,9 +352,9 @@ class OBSTexExport(object):
 
         for single_line in split:
             copy = single_line
-            single_line = OBSTexExport.matchBlankLinePat.sub(r'    \\blank', single_line, OBSTexExport.MATCH_ALL)
+            single_line = OBSTexExport.matchBlankLinePattern.sub(r'    \\blank', single_line, OBSTexExport.MATCH_ALL)
             # single_line = matchBlankLinePat.sub(r'    \\par\\par',single_line,MATCH_ALL)
-            (single_line, occurrences) = OBSTexExport.matchBulletPat.subn(another_item, single_line,
+            (single_line, occurrences) = OBSTexExport.matchBulletPattern.subn(another_item, single_line,
                                                                           OBSTexExport.MATCH_ONE)
 
             stop_itemize = False
@@ -357,7 +365,7 @@ class OBSTexExport(object):
             no_indent = (copy == single_line)
 
             single_line = OBSTexExport.filter_apply_docuwiki_and_links(single_line)
-            single_line = OBSTexExport.matchChapterVersePat.sub(r'~\1', single_line, OBSTexExport.MATCH_ALL)
+            single_line = OBSTexExport.matchChapterVersePattern.sub(r'~\1', single_line, OBSTexExport.MATCH_ALL)
 
             if stop_itemize:
                 single_line = '    \\stopitemize\n' + single_line
@@ -366,27 +374,43 @@ class OBSTexExport(object):
                 single_line = '    \\noindentation ' + single_line
 
             matter.append(single_line)
-        return j.join(matter)
+        return '\n'.join(matter)
 
 
     @staticmethod
-    def start_of_physical_page(xtr):
+    def start_of_physical_page(xtr:str) -> str:
         return '\n'.join([xtr + '%%START-OF-PHYSICAL-PAGE', xtr + '\\vtop{'])
 
 
     @staticmethod
-    def end_of_physical_page(xtr):
+    def end_of_physical_page(xtr:str) -> str:
         return '\n'.join([xtr + '}', xtr + '%%END-OF-PHYSICAL-PAGE'])
 
 
-    def export(self, chapters_json, max_chapters, img_res, lang):
+    def get_document_title_logo(self) -> str:
+        """
+        Determine if we need a uW logo or other Title on the front (first) page
+
+        Returns a TeX string
+        """
+        # logging.critical("get_document_title_logo()…")
+        # logging.critical(f"  language_id='{self.language_id}'")
+        # logging.critical(f"  language_name='{self.language_name}'")
+        # logging.critical(f"  title='{self.title}'")
+        # logging.critical(f"  publisher='{self.publisher}'")
+        if self.publisher == 'unfoldingWord' and self.language_id == 'en': # Display ® logo
+            return_string = "{\\midaligned{\\externalfigure[/opt/obs/png/uW_OBS_Logo.png]}}"
+        else:
+            return_string = f"{{\\midaligned{{\\textdir {'TRT' if self.language_direction=='rtl' else 'TLT'}\\tfd{{\\WORD{{{self.title}}}}}}}}}\n    \\blank[10em]\n    {{\\tfb{{\\WORD{{{self.language_name}}}}}}}"
+        # logging.critical(f"  About to return '{return_string}'")
+        return f'    {return_string}'
+
+
+    def export_chapters(self, chapters_json, max_chapters, img_res, lang) -> str:
         """
         Exports JSON to specified format.
         """
-
         spaces4 = ' ' * 4
-        j = '\n'
-        output = []
 
         calc_vertical_need_snip = self.tex_load_snippet_file(spaces4, 'calculate-vertical-need.tex')
         calc_leftover_snip = self.tex_load_snippet_file(spaces4, 'calculate-leftover.tex')
@@ -403,19 +427,16 @@ class OBSTexExport(object):
         adjust_two = Template(adjust_two_snip)
         place_ref_template = Template(place_ref_snip)
 
-        ix_chp = (-1)
-        for chp in chapters_json:
-            ix_chp += 1
+        output = []
+        for ix_chp, chp in enumerate(chapters_json):
             past_max_chapters = (max_chapters > 0) and (ix_chp >= max_chapters)
             if past_max_chapters:
                 break
             output.append(self.get_title(chp['title']))
-            ix_frame = (-1)
             chapter_frames = chp['frames']
             n_frame = len(chapter_frames)
             ref_text_only = OBSTexExport.do_not_break_before_chapter_verse(chp['ref'])
-            for fr in chapter_frames:
-                ix_frame += 1
+            for ix_frame, fr in enumerate(chapter_frames):
                 ix_look_ahead = 1 + ix_frame
                 is_even = ((ix_frame % 2) == 0)
                 is_last_page = \
@@ -462,19 +483,19 @@ class OBSTexExport(object):
             output.append(self.get_ref(place_ref_template, ref_text_only))
             output.append(OBSTexExport.end_of_physical_page(spaces4))
             output.append(spaces4 + '\\page[yes]')
-        return j.join(output)
+        return '\n'.join(output)
 
 
-    def run(self):
+    def run(self) -> None:
 
-        relative_path_re = re.compile(r'([{ ])obs/tex/', re.UNICODE)
+        relative_path_re = re.compile(r'([{ ])obs/tex/')
 
         remember_out = sys.stdout
 
         sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
         # Parse the front and back matter
-        front_matter = self.export_matter(self.front_matter, 0)
+        front_matter = self.export_matter(self.front_matter, test=False)
 
         # The front matter really has two parts, an "about" section and a "license" section
         # Sadly the API returns it as one blob, but we want to insert the checking level
@@ -488,42 +509,44 @@ class OBSTexExport(object):
             output_front_license = ''.join(fm[1:])
         else:
             output_front_license = ''
-        output_back = self.export_matter(self.back_matter, 0)
+        output_back = self.export_matter(self.back_matter, test=False)
 
         # Parse the body matter
         self.check_for_standard_keys_json()
 
-        output = self.export(self.body_json['chapters'], self.max_chapters, self.img_res, self.body_json['language'])
+        output_chapters = self.export_chapters(self.body_json['chapters'], self.max_chapters, self.img_res, self.body_json['language_id'])
 
         # For ConTeXt files only, Read the "main_template.tex" file replacing
         # all <<<[anyvar]>>> with its definition from the body-matter JSON file
-        outlist = []
-        tex_template = os.path.join(OBSTexExport.snippets_dir, 'main_template.tex')
-        if not os.path.exists(tex_template):
+        tex_template_filepath = os.path.join(OBSTexExport.snippets_dir, 'main_template.tex')
+        if not os.path.exists(tex_template_filepath):
             print("Failed to get TeX template.")
             sys.exit(1)
 
-        with codecs.open(tex_template, 'r', encoding='utf-8-sig') as in_file:
+        with codecs.open(tex_template_filepath, 'r', encoding='utf-8-sig') as in_file:
             template = in_file.read()
 
         # replace relative path to fonts with absolute
         template = relative_path_re.sub(r'\1{0}/'.format(OBSTexExport.snippets_dir), template)
 
+        outlist = []
         for single_line in template.splitlines():
 
-            if OBSTexExport.matchChaptersPat.search(single_line):
-                outlist.append(output)
-            elif OBSTexExport.matchFrontMatterAboutPat.search(single_line):
+            if OBSTexExport.matchTitleLogoPattern.search(single_line):
+                outlist.append(self.get_document_title_logo())
+            elif OBSTexExport.matchFrontMatterAboutPattern.search(single_line):
                 outlist.append(output_front_about)
-            elif OBSTexExport.matchFrontMatterlicensePat.search(single_line):
+            elif OBSTexExport.matchFrontMatterlicensePattern.search(single_line):
                 outlist.append(output_front_license)
-            elif OBSTexExport.matchBackMatterPat.search(single_line):
+            elif OBSTexExport.matchChaptersPattern.search(single_line):
+                outlist.append(output_chapters)
+            elif OBSTexExport.matchBackMatterPattern.search(single_line):
                 outlist.append(output_back)
             else:
                 occurs = 1
                 while occurs > 0:
                     (single_line, occurs) \
-                        = OBSTexExport.matchMiscPat.subn(self.another_replace, single_line,
+                        = OBSTexExport.matchMiscPattern.subn(self.another_replace, single_line,
                                                          OBSTexExport.MATCH_ALL)
                 outlist.append(single_line)
         full_output = '\n'.join(outlist)

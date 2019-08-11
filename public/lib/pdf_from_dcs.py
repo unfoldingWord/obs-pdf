@@ -200,13 +200,14 @@ class PdfFromDcs:
         # 5. Initialize OBS objects
         self.output_msg += f"{datetime.datetime.now()} => Initializing the OBS object…\n"
         write_file(self.output_msg_filepath, self.output_msg)
-        lang = manifest['dublin_core']['language']['identifier']
         obs_obj = OBS()
         obs_obj.date_modified = today
-        obs_obj.direction = manifest['dublin_core']['language']['direction']
-        obs_obj.language = lang
+        obs_obj.language_id = manifest['dublin_core']['language']['identifier']
+        obs_obj.language_name = manifest['dublin_core']['language']['title']
+        obs_obj.language_direction = manifest['dublin_core']['language']['direction']
         obs_obj.version = manifest['dublin_core']['version']
-        obs_obj.checking_level = manifest['checking']['checking_level']
+        obs_obj.publisher = manifest['dublin_core']['publisher']
+        # obs_obj.checking_level = manifest['checking']['checking_level']
 
         # 6. Import the chapter data
         self.output_msg += f"{datetime.datetime.now()} => Reading the chapter files…\n"
@@ -264,26 +265,26 @@ class PdfFromDcs:
             self.output_msg += f"{datetime.datetime.now()} => Beginning PDF generation…\n"
             write_file(self.output_msg_filepath, self.output_msg)
 
-            out_dir = os.path.join(self.download_dirpath, 'make_pdf')
-            make_dir(out_dir)
+            out_dirpath = os.path.join(self.download_dirpath, 'make_pdf')
+            make_dir(out_dirpath)
 
-            obs_lang_code = obs_obj.language
+            obs_language_id = obs_obj.language_id
 
             # make sure the noto language file exists
-            noto_file = os.path.join(get_resources_dir(), 'tex', 'noto-{0}.tex'.format(obs_lang_code))
-            if not isfile(noto_file):
-                shutil.copy2(os.path.join(get_resources_dir(), 'tex', 'noto-en.tex'), noto_file)
+            noto_filepath = os.path.join(get_resources_dir(), 'tex', 'noto-{0}.tex'.format(obs_language_id))
+            if not isfile(noto_filepath):
+                shutil.copy2(os.path.join(get_resources_dir(), 'tex', 'noto-en.tex'), noto_filepath)
 
             # generate a tex file
             self.output_msg += f"{datetime.datetime.now()} => Generating TeX file…\n"
             write_file(self.output_msg_filepath, self.output_msg)
-            tex_file = os.path.join(out_dir, f'{obs_lang_code}.tex')
+            tex_filepath = os.path.join(out_dirpath, f'{obs_language_id}.tex')
 
             # make sure it doesn't already exist
-            if isfile(tex_file):
-                os.remove(tex_file)
+            if isfile(tex_filepath):
+                os.remove(tex_filepath)
 
-            with OBSTexExport(obs_obj, tex_file, 0, '360px') as tex:
+            with OBSTexExport(obs_obj=obs_obj, out_path=tex_filepath, max_chapters=0, img_res='360px') as tex:
                 tex.run()
 
             # Run ConTeXt
@@ -300,7 +301,7 @@ class PdfFromDcs:
             #   3. run ConTeXt to generate the PDF
             cmd = 'export OSFONTDIR="/usr/share/fonts"' \
                   ' && mtxrun --script fonts --reload' \
-                  f' && context --paranoid --nonstopmode --trackers={trackers} "{tex_file}"'
+                  f' && context --paranoid --nonstopmode --trackers={trackers} "{tex_filepath}"'
 
             # the output from the cmd will be dumped into these files
             out_log = os.path.join(get_output_dir(), 'context.out')
@@ -314,8 +315,8 @@ class PdfFromDcs:
             self.output_msg += f"{datetime.datetime.now()} => Running ConTeXt -- this may take several minutes…\n"
             write_file(self.output_msg_filepath, self.output_msg)
             try:
-                std_out = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, cwd=out_dir)
-                self.output_msg += f"{datetime.datetime.now()} => Getting ConTeXt output.\n"
+                std_out = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, cwd=out_dirpath)
+                self.output_msg += f"{datetime.datetime.now()} => Getting ConTeXt output…\n"
                 write_file(self.output_msg_filepath, self.output_msg)
                 std_out = re.sub(r'\n\n+', '\n', std_out.decode('utf-8'), flags=re.MULTILINE)
                 write_file(out_log, std_out)
@@ -347,14 +348,14 @@ class PdfFromDcs:
                 raise ChildProcessError(err_msg)
 
             # PDF file is in out_dir
-            pdf_current_filepath = os.path.join(out_dir, f'{obs_lang_code}.pdf')
+            pdf_current_filepath = os.path.join(out_dirpath, f'{obs_language_id}.pdf')
             version = obs_obj.version.replace('.', '_')
             if version[0:1] != 'v':
                 version = f'v{version}'
             # TODO: We might want to adjust this once things become more final
-            pdf_desired_name = f'Catalog--{obs_lang_code}_obs-{version}.pdf' \
+            pdf_desired_name = f'Catalog--{obs_language_id}_obs-{version}.pdf' \
                                     if self.parameter_type == 'Catalog_lang_code' \
-                            else f'{self.user_name}--{obs_lang_code}_obs-{version}.pdf'
+                            else f'{self.user_name}--{obs_language_id}_obs-{version}.pdf'
 
             # Copy the new PDF file to the /app/obs-pdf/output/{obs_lang_code}/ folder
             # self.output_msg += f"{datetime.datetime.now()} => Copying the '{obs_lang_code}' PDF file to output directory…\n"
