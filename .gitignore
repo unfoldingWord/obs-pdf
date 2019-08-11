@@ -14,3 +14,7 @@ __pycache__/
 
 # Scripts
 setENVs.sh
+
+# Sonar
+.scannerwork/
+sonar-project.properties
