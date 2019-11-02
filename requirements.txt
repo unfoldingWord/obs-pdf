@@ -1,4 +1,4 @@
-pyyaml==3.12
+pyyaml==5.1
 regex==2018.6.9
 Flask==1.0.2
 uwsgi==2.0.17.1
