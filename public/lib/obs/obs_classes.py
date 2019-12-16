@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 from json import JSONEncoder
 # from typing import List
+# from __future__ import annotation
 
 import regex as re
 
@@ -64,7 +65,7 @@ class OBSChapter:
     img_url_template = 'https://cdn.door43.org/obs/jpg/360px/obs-en-{0}.jpg'
 
 
-    def __init__(self, json_obj=None):
+    def __init__(self, json_obj=None) -> None:
         """
         Class constructor. Optionally accepts an object for initialization.
         :param object json_obj: The name of a file to deserialize into a OBSStatus object
@@ -138,7 +139,7 @@ class OBSChapter:
 
 
     @staticmethod
-    def from_markdown(markdown, chapter_number):
+    def from_markdown(markdown: str, chapter_number: int) -> 'OBSChapter':
         """
 
         :param str|unicode markdown:
@@ -235,7 +236,9 @@ class OBS:
                 obs_chapter = OBSChapter(chapter)
             errors = errors + obs_chapter.get_errors()
 
-        if errors: return False
+        if errors:
+            print(f"Got ({len(errors)}) OBS errors: {errors}")
+            return False
         # else:
         print('No errors were found in the OBS data.')
         return True

@@ -66,6 +66,6 @@ connectDebug:
 	#
 	# tail -f /tmp/last_output_msgs.txt
 	#	is convenient to watch (once that file exists)
-	# conTeXt logs will be in /app/obs-pdf/output/ (context.err and context.out)
+	# conTeXt logs will be in /app/obs-pdf/output/ (context.out and maybe context.err)
 	# Also look in /tmp/obs-to-pdf/en-xxxx/make_pdf/en.log and en.tex
 	docker exec -it `docker inspect --format="{{.Id}}" obs-pdf` bash

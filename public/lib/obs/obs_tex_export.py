@@ -1,9 +1,10 @@
 import codecs
 import os
-import regex as re
 import sys
 from string import Template
 import logging
+
+import regex as re
 
 from lib.general_tools.app_utils import get_resources_dir
 from lib.general_tools.file_utils import write_file
@@ -11,11 +12,16 @@ from lib.general_tools.url_utils import join_url_parts
 
 
 
+UW_OBS_LOGO_PATH = '/opt/obs/png/uW_OBS_Logo.png'
+OBS_IMAGE_FOLDER_PATH = '/opt/obs/jpg/360px/'
+
+
+
 class OBSTexExport(object):
 
     # region Class Settings
     api_url_jpg = '/opt/obs/jpg'
-    snippets_dir = os.path.join(get_resources_dir(), 'tex')
+    snippets_dirpath = os.path.join(get_resources_dir(), 'tex/')
 
     MATCH_ALL = 0
     MATCH_ONE = 0
@@ -29,7 +35,7 @@ class OBSTexExport(object):
     matchSingleTokenPattern = re.compile(r"^\s*(\S+)\s*$")
     matchSectionPattern = re.compile(r"==+\s*(.*?)\s*==+")
     matchBoldPattern = re.compile(r"[*][*]\s*(.*?)\s*[*][*]")
-    matchItalicPattern = re.compile(r"(?:\A|[^:])//\s*(.*?)\s*//")
+    # matchItalicPattern = re.compile(r"(?:\A|[^:])//\s*(.*?)\s*//")
     matchUnderLinePattern = re.compile(r"__\s*(.*?)\s*__")
     matchMonoPattern = re.compile(r"[\'][\']\s*(.*?)\s*[\'][\']")
     matchRedPattern = re.compile(r"<red>\s*(.*?)\s*</red>")
@@ -41,12 +47,14 @@ class OBSTexExport(object):
     matchHeadingTwoLevelPattern = re.compile(r"(\A|[^=])==+\s*(.*?)\s*==+?([^=]|\Z)")
     matchHeadingOneLevelPattern = re.compile(r"(\A|[^=])=+\s*(.*?)\s*=+?([^=]|\Z)")
 
+    # Markdown markup patterns
     markdownH1_re = re.compile(r'^(\s*)#\s*([^#]+[^\s])(\s*#)*([^#]|\Z)')
     markdownH2_re = re.compile(r'^(\s*)##\s*([^#]+[^\s])(\s*##)*([^#]|\Z)')
     markdownH3_re = re.compile(r'^(\s*)###\s*([^#]+[^\s])(\s*###)*([^#]|\Z)')
     markdownH4_re = re.compile(r'^(\s*)####\s*([^#]+[^\s])(\s*####)*([^#]|\Z)')
-    markdownBold_re = re.compile(r'(\A|\s+)[_][_]\s*(.*?)\s*[_][_](\Z|\s+)')
-    markdownItalic_re = re.compile(r'(\A|\s+)[_]\s*(.*?)\s*[_](\Z|\s+)')
+    # markdownBold_re = re.compile(r'(\A|\s+)[_][_]\s*(.*?)\s*[_][_](\Z|\s+)')
+    # markdownItalic_re = re.compile(r'(\A|\s+)[_]\s*(.*?)\s*[_](\Z|\s+)')
+    matchItalicPattern = re.compile(r'[*]([^*].*?)\s*[*][^*]*')
     markdownTextURL_re = re.compile(r'\[(.+?)\]\(((?:https://|http://)(?:[^\[\])]+))\)')
     markdownLongTextURL_re = re.compile(r'\[(.+?)\]\(((?:https://|http://)(?:[^\[\])]{41,}))\)')
     markdownURL_re = re.compile(r'(?<!([\[(]))https*://[^\s>]+')
@@ -197,10 +205,10 @@ class OBSTexExport(object):
 
     def tex_load_snippet_file(self, xtr, entry_name) -> str:
 
-        if not os.path.isdir(OBSTexExport.snippets_dir):
-            raise IOError('Path not found: {0}'.format(OBSTexExport.snippets_dir))
+        if not os.path.isdir(OBSTexExport.snippets_dirpath):
+            raise IOError(f"Path not found: {OBSTexExport.snippets_dirpath}")
 
-        with codecs.open(os.path.join(OBSTexExport.snippets_dir, entry_name), 'r', encoding='utf-8-sig') as in_file:
+        with codecs.open(os.path.join(OBSTexExport.snippets_dirpath, entry_name), 'r', encoding='utf-8-sig') as in_file:
             each = in_file.readlines()
 
         each = each[1:]  # Skip the first line which is the utf-8 coding repeated
@@ -293,8 +301,8 @@ class OBSTexExport(object):
         single_line = OBSTexExport.matchSuperScriptPattern.sub(r'\\high{\1}', single_line, OBSTexExport.MATCH_ALL)
         single_line = OBSTexExport.matchStrikeOutPattern.sub(r'\\overstrike{\1}', single_line, OBSTexExport.MATCH_ALL)
 
-        single_line = OBSTexExport.markdownItalic_re.sub(r'\1{\\em \2\/}\3', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.markdownBold_re.sub(r'\1{\\bf \2}\3', single_line, OBSTexExport.MATCH_ALL)
+        # single_line = OBSTexExport.markdownItalic_re.sub(r'\1{\\em \2\/}\3', single_line, OBSTexExport.MATCH_ALL)
+        # single_line = OBSTexExport.markdownBold_re.sub(r'\1{\\bf \2}\3', single_line, OBSTexExport.MATCH_ALL)
 
         return single_line
 
@@ -398,10 +406,17 @@ class OBSTexExport(object):
         # logging.critical(f"  language_name='{self.language_name}'")
         # logging.critical(f"  title='{self.title}'")
         # logging.critical(f"  publisher='{self.publisher}'")
+        # Display the logo for uW en OBS, else the vernacular title
         if self.publisher == 'unfoldingWord' and self.language_id == 'en': # Display ® logo
-            return_string = "{\\midaligned{\\externalfigure[/opt/obs/png/uW_OBS_Logo.png]}}"
+            return_string = f'\\midaligned{{\\externalfigure[{UW_OBS_LOGO_PATH}]}}'
         else:
-            return_string = f"{{\\midaligned{{\\textdir {'TRT' if self.language_direction=='rtl' else 'TLT'}\\tfd{{\\WORD{{{self.title}}}}}}}}}\n    \\blank[10em]\n    {{\\tfb{{\\WORD{{{self.language_name}}}}}}}"
+            return_string = f"\\midaligned{{\\textdir {'TRT' if self.language_direction=='rtl' else 'TLT'}" \
+                                            f"\\tfd{{\\WORD{{{self.title}}}}}}}"
+                            # f"    {{\\tfb{{\\WORD{{{self.language_name}}}}}}}"
+        # Display the language name and language code
+        return_string += '\n' f"    \\blank[15em]\n" \
+                              f"    \\midaligned{{\\tfb{{{self.language_name}}}}}\n" \
+                              f"    \\midaligned{{{self.language_id}}}"
         # logging.critical(f"  About to return '{return_string}'")
         return f'    {return_string}'
 
@@ -443,7 +458,7 @@ class OBSTexExport(object):
                     (is_even and ((ix_frame + 2) >= n_frame)) \
                     or ((not is_even) and ((ix_frame + 1) >= n_frame))
                 page_is_full = (not is_even) or (ix_look_ahead < n_frame)
-                text_only = fr['text'].replace('https://cdn.door43.org/obs/jpg/360px/', '/opt/obs/jpg/360px/')
+                text_only = fr['text'].replace('https://cdn.door43.org/obs/jpg/360px/', OBS_IMAGE_FOLDER_PATH)
 
                 text_only = OBSTexExport.filter_apply_docuwiki(text_only)
                 ref_text_only = OBSTexExport.filter_apply_docuwiki(ref_text_only)
@@ -518,7 +533,7 @@ class OBSTexExport(object):
 
         # For ConTeXt files only, Read the "main_template.tex" file replacing
         # all <<<[anyvar]>>> with its definition from the body-matter JSON file
-        tex_template_filepath = os.path.join(OBSTexExport.snippets_dir, 'main_template.tex')
+        tex_template_filepath = os.path.join(OBSTexExport.snippets_dirpath, 'main_template.tex')
         if not os.path.exists(tex_template_filepath):
             print("Failed to get TeX template.")
             sys.exit(1)
@@ -527,7 +542,7 @@ class OBSTexExport(object):
             template = in_file.read()
 
         # replace relative path to fonts with absolute
-        template = relative_path_re.sub(r'\1{0}/'.format(OBSTexExport.snippets_dir), template)
+        template = relative_path_re.sub(r'\1{0}/'.format(OBSTexExport.snippets_dirpath), template)
 
         outlist = []
         for single_line in template.splitlines():
