@@ -1,5 +1,5 @@
-pyyaml==5.1.2
-regex==2019.06.08
+pyyaml==5.2
+regex==2019.12.9
 Flask==1.1.1
 uwsgi==2.0.18
-boto3==1.9.201
+boto3==1.10.39
