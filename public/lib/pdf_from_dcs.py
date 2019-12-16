@@ -31,10 +31,18 @@ DOOR43_SITE = 'https://git.door43.org'
 
 class PdfFromDcs:
 
-    def __init__(self, parameter_type: str, parameter: str):
+    def __init__(self, parameter_type: str, parameter: str) -> None:
+        """
+        parameter_type is either
+            'Catalog_lang_code' where a language code (e.g., 'en' or 'es-419' is given)
+            or
+            'Door43_repo' where a repo username/repoName is given.
+
+        parameter is the string value itself
+        """
         self.parameter_type = parameter_type
         self.parameter = parameter
-        self.output_msg = ''
+        self.output_msgs = ''
         self.output_msg_filepath = '/tmp/last_output_msgs.txt'
         self.lang_code = self.given_repo_spec = None
         if parameter_type == 'Catalog_lang_code':
@@ -45,8 +53,7 @@ class PdfFromDcs:
         else:
             err_msg = f"Unrecognized parameter type: '{parameter_type}'\n"
             print(f"ERROR: {err_msg}")
-            self.output_msg += err_msg
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(err_msg)
             raise TypeError
         self.download_dirpath = f"/tmp/obs-to-pdf/{parameter.replace('/','--')}-{int(time.time())}/"
 
@@ -57,8 +64,7 @@ class PdfFromDcs:
         except Exception as e:
             err_msg = f"Exception in __init__: {e}: {traceback.format_exc()}\n"
             print(f"ERROR: {err_msg}")
-            self.output_msg += err_msg
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(err_msg)
             raise e
     # end of PdfFromDcs.init function
 
@@ -72,6 +78,15 @@ class PdfFromDcs:
         pass
 
 
+    def output_msg(self, msg:str) -> None:
+        """
+        Outputs/Saves a message for debugging and/or showing status
+        """
+        print(msg)
+        self.output_msgs += msg
+        write_file(self.output_msg_filepath, self.output_msgs)
+
+
     def run(self) -> str:
         """
         Clean up left-over files from any previous runs.
@@ -83,8 +98,7 @@ class PdfFromDcs:
             Unzip and check the OBS data.
         Call PdfFromDcs.create_pdf function to make the PDF
         """
-        self.output_msg += f"{datetime.datetime.now()} => Starting OBS PDF processing for '{self.parameter}'…\n"
-        write_file(self.output_msg_filepath, self.output_msg)
+        self.output_msg(f"{datetime.datetime.now()} => Starting OBS PDF processing for '{self.parameter}'…\n")
 
         # Clean up left-over files from any previous runs
         self.cleanup_files()
@@ -97,8 +111,7 @@ class PdfFromDcs:
 
         if self.parameter_type == 'Catalog_lang_code':
             # Get the catalog
-            self.output_msg += f"{datetime.datetime.now()} => Downloading the Door43 Catalog…\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} => Downloading the Door43 Catalog…\n")
             catalog = get_catalog()
 
             # Find the language we need
@@ -106,14 +119,12 @@ class PdfFromDcs:
 
             if not langs:
                 err_msg = f'Did not find "{self.lang_code}" in the catalog.'
-                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-                write_file(self.output_msg_filepath, self.output_msg)
+                self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                 raise ValueError(err_msg)
 
             if len(langs) > 1:
                 err_msg = f'Found more than one entry for "{self.lang_code}" in the catalog.'
-                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-                write_file(self.output_msg_filepath, self.output_msg)
+                self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                 raise ValueError(err_msg)
 
             lang_info = langs[0]  # type: dict
@@ -123,14 +134,12 @@ class PdfFromDcs:
 
             if not resources:
                 err_msg = f'Did not find an entry for "{self.lang_code}" OBS in the catalog.'
-                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-                write_file(self.output_msg_filepath, self.output_msg)
+                self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                 raise ValueError(err_msg)
 
             if len(resources) > 1:
                 err_msg = f'Found more than one entry for "{self.lang_code}" OBS in the catalog.'
-                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-                write_file(self.output_msg_filepath, self.output_msg)
+                self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                 raise ValueError(err_msg)
 
             resource = resources[0]  # type: dict
@@ -144,8 +153,7 @@ class PdfFromDcs:
 
                     if len(urls) > 1:
                         err_msg = f'Found more than one zipped markdown entry for "{self.lang_code}" OBS in the catalog.'
-                        self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-                        write_file(self.output_msg_filepath, self.output_msg)
+                        self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                         raise ValueError(err_msg)
 
                     if len(urls) == 1:
@@ -153,14 +161,12 @@ class PdfFromDcs:
 
             if not found_sources:
                 err_msg = f'Did not find any zipped markdown entries for "{self.lang_code}" OBS in the catalog.'
-                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-                write_file(self.output_msg_filepath, self.output_msg)
+                self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                 raise ValueError(err_msg)
 
             if len(found_sources) > 1:
                 err_msg = f'Found more than one zipped markdown entry for "{self.lang_code}" OBS in the catalog.'
-                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-                write_file(self.output_msg_filepath, self.output_msg)
+                self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                 raise ValueError(err_msg)
 
             source_zip_url = found_sources[0]
@@ -172,34 +178,29 @@ class PdfFromDcs:
 
 
         # 2. Download then unzip
-        self.output_msg += f"{datetime.datetime.now()} => Downloading '{source_zip_url}'…\n"
-        write_file(self.output_msg_filepath, self.output_msg)
+        self.output_msg(f"{datetime.datetime.now()} => Downloading '{source_zip_url}'…\n")
         download_file(source_zip_url, downloaded_filepath)
         unzip(downloaded_filepath, self.download_dirpath)
 
         # 3. Check for valid repository structure
-        manifest_file = os.path.join(source_dirpath, 'manifest.yaml')
-        if not isfile(manifest_file):
+        manifest_filepath = os.path.join(source_dirpath, 'manifest.yaml')
+        if not isfile(manifest_filepath):
             err_msg = "Did not find manifest.json in the resource container"
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
             raise FileNotFoundError(err_msg)
 
-        content_dir = os.path.join(source_dirpath, 'content')
-        if not isdir(content_dir):
+        content_dirpath = os.path.join(source_dirpath, 'content/')
+        if not isdir(content_dirpath):
             err_msg = "Did not find the content directory in the resource container"
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
             raise NotADirectoryError(err_msg)
 
         # 4. Read the manifest (status, version, localized name, etc)
-        self.output_msg += f"{datetime.datetime.now()} => Reading the '{self.parameter}' manifest…\n"
-        write_file(self.output_msg_filepath, self.output_msg)
-        manifest = load_yaml_object(manifest_file)
+        self.output_msg(f"{datetime.datetime.now()} => Reading the '{self.parameter}' manifest…\n")
+        manifest = load_yaml_object(manifest_filepath)
 
         # 5. Initialize OBS objects
-        self.output_msg += f"{datetime.datetime.now()} => Initializing the OBS object…\n"
-        write_file(self.output_msg_filepath, self.output_msg)
+        self.output_msg(f"{datetime.datetime.now()} => Initializing the OBS object…\n")
         obs_obj = OBS()
         obs_obj.date_modified = today
         obs_obj.language_id = manifest['dublin_core']['language']['identifier']
@@ -210,42 +211,36 @@ class PdfFromDcs:
         # obs_obj.checking_level = manifest['checking']['checking_level']
 
         # 6. Import the chapter data
-        self.output_msg += f"{datetime.datetime.now()} => Reading the chapter files…\n"
-        write_file(self.output_msg_filepath, self.output_msg)
-        obs_obj.chapters = self.load_obs_chapters(content_dir)
+        self.output_msg(f"{datetime.datetime.now()} => Reading the chapter files…\n")
+        obs_obj.chapters = self.load_obs_chapters(content_dirpath)
         obs_obj.chapters.sort(key=lambda c: int(c['number']))
 
-        self.output_msg += f"{datetime.datetime.now()} => Verifying the chapter data…\n"
-        write_file(self.output_msg_filepath, self.output_msg)
+        self.output_msg(f"{datetime.datetime.now()} => Verifying the chapter data…\n")
         if not obs_obj.verify_all():
             err_msg = "Quality check did not pass."
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
             raise OBSError(err_msg)
 
         # 7. Front and back matter
-        self.output_msg += f"{datetime.datetime.now()} => Reading the front and back matter…\n"
-        title_filepath = os.path.join(content_dir, 'front', 'title.md')
+        self.output_msg(f"{datetime.datetime.now()} => Reading the front and back matter…\n")
+        title_filepath = os.path.join(content_dirpath, 'front', 'title.md')
         if not isfile(title_filepath):
             err_msg = "Did not find the title file in the resource container"
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
             raise OBSError(err_msg)
         obs_obj.title = read_file(title_filepath)
 
-        front_filepath = os.path.join(content_dir, 'front', 'intro.md')
+        front_filepath = os.path.join(content_dirpath, 'front', 'intro.md')
         if not isfile(front_filepath):
             err_msg = "Did not find the front/intro.md file in the resource container"
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
             raise OBSError(err_msg)
         obs_obj.front_matter = self.remove_trailing_hashes(read_file(front_filepath), 'front-matter')
 
-        back_filepath = os.path.join(content_dir, 'back', 'intro.md')
+        back_filepath = os.path.join(content_dirpath, 'back', 'intro.md')
         if not isfile(back_filepath):
             err_msg = "Did not find the back/intro.md file in the resource container"
-            self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
             raise OBSError(err_msg)
         obs_obj.back_matter = self.remove_trailing_hashes(read_file(back_filepath), 'back-matter')
 
@@ -262,8 +257,7 @@ class PdfFromDcs:
         :return: S3 uploaded URL
         """
         try:
-            self.output_msg += f"{datetime.datetime.now()} => Beginning PDF generation…\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} => Beginning PDF generation…\n")
 
             out_dirpath = os.path.join(self.download_dirpath, 'make_pdf')
             make_dir(out_dirpath)
@@ -276,8 +270,7 @@ class PdfFromDcs:
                 shutil.copy2(os.path.join(get_resources_dir(), 'tex', 'noto-en.tex'), noto_filepath)
 
             # generate a tex file
-            self.output_msg += f"{datetime.datetime.now()} => Generating TeX file…\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} => Generating TeX file…\n")
             tex_filepath = os.path.join(out_dirpath, f'{obs_language_id}.tex')
 
             # make sure it doesn't already exist
@@ -288,8 +281,7 @@ class PdfFromDcs:
                 tex.run()
 
             # Run ConTeXt
-            self.output_msg += f"{datetime.datetime.now()} => Preparing to run ConTeXt…\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} => Preparing to run ConTeXt…\n")
 
             # noinspection PyTypeChecker
             trackers = ','.join(['afm.loading', 'fonts.missing', 'fonts.warnings', 'fonts.names',
@@ -312,12 +304,10 @@ class PdfFromDcs:
             if isfile(err_log_path):
                 os.unlink(err_log_path)
 
-            self.output_msg += f"{datetime.datetime.now()} => Running ConTeXt -- this may take several minutes…\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} => Running ConTeXt -- this may take several minutes…\n")
             try:
                 std_out = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, cwd=out_dirpath)
-                self.output_msg += f"{datetime.datetime.now()} => Getting ConTeXt output…\n"
-                write_file(self.output_msg_filepath, self.output_msg)
+                self.output_msg(f"{datetime.datetime.now()} => Getting ConTeXt output…\n")
                 std_out = re.sub(r'\n\n+', '\n', std_out.decode('utf-8'), flags=re.MULTILINE)
                 write_file(out_log, std_out)
 
@@ -326,13 +316,11 @@ class PdfFromDcs:
                 if err_lines:
                     write_file(err_log_path, '\n'.join(err_lines))
                     err_msg = f"Errors were generated by ConTeXt. See {err_log_path}."
-                    self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-                    write_file(self.output_msg_filepath, self.output_msg)
+                    self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                     raise ChildProcessError(err_msg)
 
             except subprocess.CalledProcessError as e:
-                self.output_msg += f"{datetime.datetime.now()} => ConTeXt process failed!\n"
-                write_file(self.output_msg_filepath, self.output_msg)
+                self.output_msg(f"{datetime.datetime.now()} => ConTeXt process failed!\n")
 
                 # find the tex error lines
                 std_out = e.stdout.decode('utf-8')
@@ -343,8 +331,7 @@ class PdfFromDcs:
                 write_file(err_log_path, '\n'.join(err_lines))
 
                 err_msg = f"Errors were generated by ConTeXt. See {err_log_path}."
-                self.output_msg += f"{datetime.datetime.now()} ERROR: {err_msg}\n"
-                write_file(self.output_msg_filepath, self.output_msg)
+                self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                 raise ChildProcessError(err_msg)
 
             # PDF file is in out_dir
@@ -358,19 +345,16 @@ class PdfFromDcs:
                             else f'{self.user_name}--{obs_language_id}_obs-{version}.pdf'
 
             # Copy the new PDF file to the /app/obs-pdf/output/{obs_lang_code}/ folder
-            # self.output_msg += f"{datetime.datetime.now()} => Copying the '{obs_lang_code}' PDF file to output directory…\n"
-            # write_file(self.output_msg_filepath, self.output_msg)
+            # self.output_msg(f"{datetime.datetime.now()} => Copying the '{obs_lang_code}' PDF file to output directory…\n")
             # output_dir = os.path.join(get_output_dir(), obs_lang_code)
             # if not isdir(output_dir):
             #     make_dir(output_dir, linux_mode=0o777, error_if_not_writable=True)
             # pdf_destination_filepath = os.path.join(output_dir, pdf_desired_name)
-            # self.output_msg += f"  Copying {pdf_current_filepath} to {pdf_destination_filepath}…\n"
-            # write_file(self.output_msg_filepath, self.output_msg)
+            # self.output_msg(f"  Copying {pdf_current_filepath} to {pdf_destination_filepath}…\n")
             # shutil.copyfile(pdf_current_filepath, pdf_destination_filepath)
 
             # Upload the PDF to our AWS S3 bucket
-            self.output_msg += f"{datetime.datetime.now()} => Uploading '{pdf_desired_name}' to S3 {CDN_BUCKET_NAME}…\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} => Uploading '{pdf_desired_name}' to S3 {CDN_BUCKET_NAME}…\n")
             cdn_s3_handler = S3Handler(bucket_name=CDN_BUCKET_NAME,
                                        aws_access_key_id=self.aws_access_key_id,
                                        aws_secret_access_key=self.aws_secret_access_key,
@@ -378,19 +362,18 @@ class PdfFromDcs:
             s3_commit_key = f'{CDN_FOLDER}/{pdf_desired_name}'
             cdn_s3_handler.upload_file(pdf_current_filepath, s3_commit_key)
 
-            # return pdf_desired_name
+            # return pdf link
+            self.output_msg(f"Should be viewable at https://{CDN_BUCKET_NAME}/{s3_commit_key}.\n")
             return f'https://{CDN_BUCKET_NAME}/{s3_commit_key}'
 
         except Exception as e:
             err_msg = f"Exception in create_pdf: {e}: {traceback.format_exc()}\n"
             print(f"ERROR: {err_msg}")
-            self.output_msg += err_msg
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(err_msg)
             raise e
 
         finally:
-            self.output_msg += f"{datetime.datetime.now()} => Exiting PDF generation code.\n"
-            write_file(self.output_msg_filepath, self.output_msg)
+            self.output_msg(f"{datetime.datetime.now()} => Exiting PDF generation code.\n")
             # with open(, 'wt') as log_output_file:
                 # log_output_file.write(self.output)
     # end of PdfFromDcs.create_pdf function
