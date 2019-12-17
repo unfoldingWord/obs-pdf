@@ -1,3 +1,11 @@
+master:
+[![Build Status](https://travis-ci.org/unfoldingWord-dev/obs-pdf.svg?branch=master)](https://travis-ci.org/unfoldingWord-dev/obs-pdf?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/unfoldingWord-dev/obs-pdf/badge.svg?branch=master)](https://coveralls.io/github/unfoldingWord-dev/obs-pdf?branch=master)
+
+develop:
+[![Build Status](https://travis-ci.org/unfoldingWord-dev/obs-pdf.svg?branch=develop)](https://travis-ci.org/unfoldingWord-dev/obs-pdf?branch=develop)
+[![Coverage Status](https://coveralls.io/repos/github/unfoldingWord-dev/obs-pdf/badge.svg?branch=develop)](https://coveralls.io/github/unfoldingWord-dev/obs-pdf?branch=develop)
+
 # PDF Generator for OBS
 
 #### NOTE: Python 3 Only
