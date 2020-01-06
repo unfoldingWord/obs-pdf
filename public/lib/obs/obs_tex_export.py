@@ -1,14 +1,18 @@
+# Python imports
 import codecs
 import os
 import sys
 from string import Template
 import logging
+import datetime
 
+# PyPI imports
 import regex as re
 
 from lib.general_tools.app_utils import get_resources_dir
 from lib.general_tools.file_utils import write_file
 from lib.general_tools.url_utils import join_url_parts
+from lib.obs.obs_classes import OBS
 
 
 
@@ -17,7 +21,7 @@ OBS_IMAGE_FOLDER_PATH = '/opt/obs/jpg/360px/'
 
 
 
-class OBSTexExport(object):
+class OBSTexExport:
 
     # region Class Settings
     api_url_jpg = '/opt/obs/jpg'
@@ -67,11 +71,11 @@ class OBSTexExport(object):
     # DocuWiki markup patterns applied only to front and back matter
     matchBulletPattern = re.compile(r"^\s*[*]\s+(.*)$")
     # Miscellaneous markup patterns
-    matchTitleLogoPattern = re.compile(r"===TITLE\.LOGO===")
-    matchFrontMatterAboutPattern = re.compile(r"===FRONT\.MATTER\.ABOUT===")
-    matchFrontMatterlicensePattern = re.compile(r"===FRONT\.MATTER\.LICENSE===")
+    matchTitleLogoPattern = re.compile(r"===TITLE\.LOGO===") # TITLE.LOGO
+    matchFrontMatterAboutPattern = re.compile(r"===FRONT\.MATTER\.ABOUT===") # FRONT.MATTER.ABOUT
+    matchFrontMatterlicensePattern = re.compile(r"===FRONT\.MATTER\.LICENSE===") # FRONT.MATTER.LICENSE
     matchChaptersPattern = re.compile(r"===CHAPTERS===")
-    matchBackMatterPattern = re.compile(r"===BACK\.MATTER===")
+    matchBackMatterPattern = re.compile(r"===BACK\.MATTER===") # BACK.MATTER
     matchMiscPattern = re.compile(r"<<<[\[]([^<>=]+)[\]]>>>")
     # Other patterns
     NBSP = '~'  # non-breaking 1-en space
@@ -92,10 +96,9 @@ class OBSTexExport(object):
     # endregion
 
 
-    def __init__(self, obs_obj, out_path, max_chapters, img_res) -> None:
+    def __init__(self, obs_obj:OBS, out_path:str, max_chapters:int, img_res:str) -> None:
         """
 
-        :type obs_obj: app.obs.obs_classes.OBS
         """
         self.language_id = obs_obj.language_id
         self.language_name = obs_obj.language_name
@@ -103,6 +106,7 @@ class OBSTexExport(object):
         self.out_path = out_path
         self.max_chapters = max_chapters
         self.img_res = img_res
+        self.version_number = obs_obj.version
         # self.checking_level = obs_obj.checking_level
         self.title = obs_obj.title
         self.publisher = obs_obj.publisher
@@ -261,7 +265,7 @@ class OBSTexExport(object):
         return copy
 
 
-    def get_ref(self, place_ref_template, text):
+    def get_ref(self, place_ref_template, text) -> str:
 
         if self.body_json['language_direction'] == 'rtl':
             pardir = 'TRT'
@@ -272,7 +276,7 @@ class OBSTexExport(object):
 
 
     @staticmethod
-    def filter_apply_docuwiki_start(single_line):
+    def filter_apply_docuwiki_start(single_line:str) -> str:
         # Order is important here
         single_line = OBSTexExport.matchHeadingFourLevelPattern.sub(r'\1{\\bfd \2}\3', single_line, OBSTexExport.MATCH_ALL)
         single_line = OBSTexExport.matchHeadingThreeLevelPattern.sub(r'\1{\\bfc \2}\3', single_line, OBSTexExport.MATCH_ALL)
@@ -308,21 +312,21 @@ class OBSTexExport(object):
 
 
     @staticmethod
-    def filter_apply_docuwiki_finish(single_line):
+    def filter_apply_docuwiki_finish(single_line:str) -> str:
         single_line = OBSTexExport.matchPipePattern.sub(r'\\textbar{}', single_line, OBSTexExport.MATCH_ALL)
         single_line = OBSTexExport.matchRemoveDummyTokenPattern.sub(r'', single_line, OBSTexExport.MATCH_ALL)
         return single_line
 
 
     @staticmethod
-    def filter_apply_docuwiki(single_line):
+    def filter_apply_docuwiki(single_line:str) -> str:
         single_line = OBSTexExport.filter_apply_docuwiki_start(single_line)
         single_line = OBSTexExport.filter_apply_docuwiki_finish(single_line)
         return single_line
 
 
     @staticmethod
-    def filter_apply_docuwiki_and_links(single_line):
+    def filter_apply_docuwiki_and_links(single_line:str) -> str:
         single_line = OBSTexExport.filter_apply_docuwiki_start(single_line)
 
         # set up http(s) hyperlinks
@@ -351,7 +355,7 @@ class OBSTexExport(object):
 
         self.num_items = 0
 
-        def another_item(match_obj):
+        def another_item(match_obj) -> str:
             self.num_items += 1
             ans = '    \\item{' + match_obj.group(1) + '}'
             if self.num_items == 1:
@@ -413,7 +417,8 @@ class OBSTexExport(object):
             return_string = f"\\midaligned{{\\textdir {'TRT' if self.language_direction=='rtl' else 'TLT'}" \
                                             f"\\tfd{{\\WORD{{{self.title}}}}}}}"
                             # f"    {{\\tfb{{\\WORD{{{self.language_name}}}}}}}"
-        # Display the language name and language code
+        # Display the language name and language code and version
+        #   NOTE: tfb->1.2x, tfx->0.8x according to https://wiki.contextgarden.net/Font_Switching#Font_sizes
         return_string += '\n' f"    \\blank[15em]\n" \
                               f"    \\midaligned{{\\tfb{{{self.language_name}}}}}\n" \
                               f"    \\midaligned{{{self.language_id}}}"
@@ -421,7 +426,7 @@ class OBSTexExport(object):
         return f'    {return_string}'
 
 
-    def export_chapters(self, chapters_json, max_chapters, img_res, lang) -> str:
+    def export_chapters(self, chapters_json, max_chapters:int, img_res:str, lang) -> str:
         """
         Exports JSON to specified format.
         """
@@ -524,6 +529,9 @@ class OBSTexExport(object):
             output_front_license = ''.join(fm[1:])
         else:
             output_front_license = ''
+        # TODO: Do these strings need to be translated???
+        output_front_license += f"\n\nVersion {self.version_number}, PDF created {datetime.date.today()}."
+
         output_back = self.export_matter(self.back_matter, test=False)
 
         # Parse the body matter
