@@ -1,8 +1,7 @@
+from typing import List, Optional
 from datetime import datetime
 import os
 from json import JSONEncoder
-# from typing import List
-# from __future__ import annotation
 
 import regex as re
 
@@ -12,7 +11,7 @@ from lib.obs import chapters_and_frames
 
 
 class OBSStatus:
-    def __init__(self, file_name=None):
+    def __init__(self, file_name:Optional[str]=None) -> None:
         """
         Class constructor. Optionally accepts the name of a file to deserialize.
         :param str file_name: The name of a file to deserialize into a OBSStatus object
@@ -34,7 +33,7 @@ class OBSStatus:
             self.version = ''
 
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         return item in self.__dict__
 
 
@@ -72,10 +71,10 @@ class OBSChapter:
         """
         # deserialize
         if json_obj:
-            self.__dict__ = json_obj  # type: dict
+            self.__dict__:dict = json_obj
 
         else:
-            self.frames = []  # type: List[dict]
+            self.frames:List[dict] = []
             self.number = ''
             self.ref = ''
             self.title = ''
