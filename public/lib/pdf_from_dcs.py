@@ -25,7 +25,7 @@ AWS_REGION_NAME = 'us-west-2'
 CDN_BUCKET_NAME = 'cdn.door43.org'
 CDN_FOLDER = 'obs/auto_PDFs' # Folder inside the CDN bucket
 # CDN_FOLDER = 'tx/job/auto_PDFs' # Folder inside the CDN bucket -- this one has 1-DAY AUTODELETE
-DOOR43_SITE = 'https://git.door43.org'
+DOOR43_SITE_URL = 'https://git.door43.org'
 
 
 
@@ -173,7 +173,7 @@ class PdfFromDcs:
             source_dirpath = os.path.join(self.download_dirpath, f'{self.lang_code}_obs/')
 
         elif self.parameter_type == 'Door43_repo':
-            source_zip_url = f'{DOOR43_SITE}/{self.given_repo_spec}/archive/master.zip'
+            source_zip_url = f'{DOOR43_SITE_URL}/{self.given_repo_spec}/archive/master.zip'
             source_dirpath = os.path.join(self.download_dirpath, self.repo_name)
 
 
@@ -248,7 +248,7 @@ class PdfFromDcs:
     # end of PdfFromDcs.run()
 
 
-    def create_pdf(self, obs_obj: OBS) -> str:
+    def create_pdf(self, obs_obj:OBS) -> str:
         """
         Called from PdfFromDcs.run() above.
 
@@ -340,7 +340,7 @@ class PdfFromDcs:
             if version[0:1] != 'v':
                 version = f'v{version}'
             # TODO: We might want to adjust this once things become more final
-            pdf_desired_name = f'Catalog--{obs_language_id}_obs-{version}.pdf' \
+            pdf_desired_name = f'Door43-Catalog--{obs_language_id}_obs-{version}.pdf' \
                                     if self.parameter_type == 'Catalog_lang_code' \
                             else f'{self.user_name}--{obs_language_id}_obs-{version}.pdf'
 
