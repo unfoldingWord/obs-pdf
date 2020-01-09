@@ -24,7 +24,7 @@ ENV DEBUG_MODE True
 #   REDIS_URL (optional -- defaults to 'redis://127.0.0.1:6379')
 #   GRAPHITE_URL (optional -- defaults to 'localhost')
 
-# install the obs-pdf app
+# install the obs-pdf app FROM GitHub
 RUN cd /app \
     && git clone --single-branch -b develop https://github.com/unfoldingWord-dev/obs-pdf.git \
     && cd /app/obs-pdf \

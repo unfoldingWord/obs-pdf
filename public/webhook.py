@@ -85,15 +85,17 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     assert payload['source'].startswith('https://git.door43.org/')
     assert payload['source'].endswith('.zip')
 
-    main_source_path = payload['source'][23:-4]
+    # e.g., 'https://git.door43.org/unfoldingWord/en_obs/archive/master.zip'
+    main_source_path = payload['source'][23:-4] # Now 'unfoldingWord/en_obs/archive/master'
     bits = main_source_path.split('/')
     assert len(bits) == 4
-    assert bits[3] == 'archive'
+    assert bits[2] in ('archive','commit') # What else might it be?
     parameters = bits[0], bits[1], bits[3]
 
     if 'identifier' in payload: description = payload['identifier']
     else: description = main_source_path
 
+    logging.debug(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
     try:
         with PdfFromDcs(prefix, parameter_type='username_repoName_spec', parameter=parameters) as f:
             upload_URL = f.run()
