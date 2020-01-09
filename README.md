@@ -42,5 +42,7 @@ docker run --name obs-pdf --rm -p 8080:80 -it --cpus=0.5 unfoldingWord/obs-pdf:l
 Then, inside the container, run these commands to start the application:
 ```bash
 cd /
-./start.sh
+./start_WebApp.sh
+or
+./start_RqApp.sh
 ```

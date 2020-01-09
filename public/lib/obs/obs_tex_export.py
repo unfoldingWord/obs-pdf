@@ -34,64 +34,73 @@ class OBSTexExport:
     clickableLink_re = r'{\\underbar{{\\goto{\1}[url(\1)]}}}'
     clickableTextLink_re = r'{\\underbar{{\\goto{\1}[url(\2)]}}}'
 
-    # DocuWiki markup patterns
-    matchRemoveDummyTokenPattern = re.compile(r"===!!!===")
-    matchSingleTokenPattern = re.compile(r"^\s*(\S+)\s*$")
-    matchSectionPattern = re.compile(r"==+\s*(.*?)\s*==+")
-    matchBoldPattern = re.compile(r"[*][*]\s*(.*?)\s*[*][*]")
-    # matchItalicPattern = re.compile(r"(?:\A|[^:])//\s*(.*?)\s*//")
-    matchUnderLinePattern = re.compile(r"__\s*(.*?)\s*__")
-    matchMonoPattern = re.compile(r"[\'][\']\s*(.*?)\s*[\'][\']")
-    matchRedPattern = re.compile(r"<red>\s*(.*?)\s*</red>")
-    matchMagentaPattern = re.compile(r"<mag[enta]*>\s*(.*?)\s*</mag[enta]*>")
-    matchBluePattern = re.compile(r"<blue>\s*(.*?)\s*</blue>")
-    matchGreenPattern = re.compile(r"<green>\s*(.*?)\s*</green>")
-    matchHeadingFourLevelPattern = re.compile(r"(\A|[^=])====+\s*(.*?)\s*===+?([^=]|\Z)")
-    matchHeadingThreeLevelPattern = re.compile(r"(\A|[^=])===+\s*(.*?)\s*==+?([^=]|\Z)")
-    matchHeadingTwoLevelPattern = re.compile(r"(\A|[^=])==+\s*(.*?)\s*==+?([^=]|\Z)")
-    matchHeadingOneLevelPattern = re.compile(r"(\A|[^=])=+\s*(.*?)\s*=+?([^=]|\Z)")
+    # Docuwiki markdown patterns
+    matchRemoveDummyTokenPattern = re.compile(r'===!!!===')
+    matchSingleTokenPattern = re.compile(r'^\s*(\S+)\s*$')
+    matchSectionPattern = re.compile(r'==+\s*(.*?)\s*==+')
 
-    # Markdown markup patterns
+    # Character emphasis
+    matchTripleAsteriskPairs = re.compile(r'[*][*][*]\s*(.*?)\s*[*][*][*]')
+    matchTripleUnderlinePairs = re.compile(r'[_][_][_]\s*(.*?)\s*[_][_][_]')
+    matchDoubleAsteriskPairs = re.compile(r'(?=[^*]*)[*][*]\s*(.*?)\s*[*][*](?=[^*]*)')
+    matchDoubleUnderlinePairs = re.compile(r'(?=[^_]*)[_][_]\s*(.*?)\s*[_][_](?=[^_]*)')
+    matchSingleAsteriskPairs = re.compile(r'(?=[^*]*)[*]\s*(.*?)\s*[*](?=[^*]*)')
+    matchSingleUnderlinePairs = re.compile(r'(?=[^_]*)[_]\s*(.*?)\s*[_](?=[^_]*)')
+    # matchItalicPattern = re.compile(r'(?:\A|[^:])//\s*(.*?)\s*//')
+    # markdownItalic_re = re.compile(r'(\A|\s+)[_]\s*(.*?)\s*[_](\Z|\s+)')
+    # markdownBold_re = re.compile(r'(\A|\s+)[_][_]\s*(.*?)\s*[_][_](\Z|\s+)')
+    # matchDoubleUnderlinePairs = re.compile(r'[^_]*__\s*(.*?)\s*__[^_]*')
+    # matchSingleUnderlinePairs = re.compile(r'[^_]*_\s*(.*?)\s*_[^_]*')
+
+    matchMonoPattern = re.compile(r'[\'][\']\s*(.*?)\s*[\'][\']')
+    matchRedPattern = re.compile(r'<red>\s*(.*?)\s*</red>')
+    matchMagentaPattern = re.compile(r'<mag[enta]*>\s*(.*?)\s*</mag[enta]*>')
+    matchBluePattern = re.compile(r'<blue>\s*(.*?)\s*</blue>')
+    matchGreenPattern = re.compile(r'<green>\s*(.*?)\s*</green>')
+    matchHeadingFourLevelPattern = re.compile(r'(\A|[^=])====+\s*(.*?)\s*===+?([^=]|\Z)')
+    matchHeadingThreeLevelPattern = re.compile(r'(\A|[^=])===+\s*(.*?)\s*==+?([^=]|\Z)')
+    matchHeadingTwoLevelPattern = re.compile(r'(\A|[^=])==+\s*(.*?)\s*==+?([^=]|\Z)')
+    matchHeadingOneLevelPattern = re.compile(r'(\A|[^=])=+\s*(.*?)\s*=+?([^=]|\Z)')
+
+    # Markdown heading patterns
     markdownH1_re = re.compile(r'^(\s*)#\s*([^#]+[^\s])(\s*#)*([^#]|\Z)')
     markdownH2_re = re.compile(r'^(\s*)##\s*([^#]+[^\s])(\s*##)*([^#]|\Z)')
     markdownH3_re = re.compile(r'^(\s*)###\s*([^#]+[^\s])(\s*###)*([^#]|\Z)')
     markdownH4_re = re.compile(r'^(\s*)####\s*([^#]+[^\s])(\s*####)*([^#]|\Z)')
-    # markdownBold_re = re.compile(r'(\A|\s+)[_][_]\s*(.*?)\s*[_][_](\Z|\s+)')
-    # markdownItalic_re = re.compile(r'(\A|\s+)[_]\s*(.*?)\s*[_](\Z|\s+)')
-    matchItalicPattern = re.compile(r'[*]([^*].*?)\s*[*][^*]*')
+
     markdownTextURL_re = re.compile(r'\[(.+?)\]\(((?:https://|http://)(?:[^\[\])]+))\)')
     markdownLongTextURL_re = re.compile(r'\[(.+?)\]\(((?:https://|http://)(?:[^\[\])]{41,}))\)')
     markdownURL_re = re.compile(r'(?<!([\[(]))https*://[^\s>]+')
 
-    matchSubScriptPattern = re.compile(r"<sub>\s*(.*?)\s*</sub>")
-    matchSuperScriptPattern = re.compile(r"<sup>\s*(.*?)\s*</sup>")
-    matchStrikeOutPattern = re.compile(r"<del>\s*(.*?)\s*</del>")
+    matchSubScriptPattern = re.compile(r'<sub>\s*(.*?)\s*</sub>')
+    matchSuperScriptPattern = re.compile(r'<sup>\s*(.*?)\s*</sup>')
+    matchStrikeOutPattern = re.compile(r'<del>\s*(.*?)\s*</del>')
 
-    matchPipePattern = re.compile(r"(\|)")
+    matchPipePattern = re.compile(r'(\|)')
     # DocuWiki markup patterns applied only to front and back matter
-    matchBulletPattern = re.compile(r"^\s*[*]\s+(.*)$")
+    matchBulletPattern = re.compile(r'^\s*[*]\s+(.*)$')
     # Miscellaneous markup patterns
-    matchTitleLogoPattern = re.compile(r"===TITLE\.LOGO===") # TITLE.LOGO
-    matchFrontMatterAboutPattern = re.compile(r"===FRONT\.MATTER\.ABOUT===") # FRONT.MATTER.ABOUT
-    matchFrontMatterlicensePattern = re.compile(r"===FRONT\.MATTER\.LICENSE===") # FRONT.MATTER.LICENSE
-    matchChaptersPattern = re.compile(r"===CHAPTERS===")
-    matchBackMatterPattern = re.compile(r"===BACK\.MATTER===") # BACK.MATTER
-    matchMiscPattern = re.compile(r"<<<[\[]([^<>=]+)[\]]>>>")
+    matchTitleLogoPattern = re.compile(r'===TITLE\.LOGO===') # TITLE.LOGO
+    matchFrontMatterAboutPattern = re.compile(r'===FRONT\.MATTER\.ABOUT===') # FRONT.MATTER.ABOUT
+    matchFrontMatterlicensePattern = re.compile(r'===FRONT\.MATTER\.LICENSE===') # FRONT.MATTER.LICENSE
+    matchChaptersPattern = re.compile(r'===CHAPTERS===')
+    matchBackMatterPattern = re.compile(r'===BACK\.MATTER===') # BACK.MATTER
+    matchMiscPattern = re.compile(r'<<<[\[]([^<>=]+)[\]]>>>')
     # Other patterns
     NBSP = '~'  # non-breaking 1-en space
     NBKN = '\\,\\,\\,'  # Three kerns in a row, non-breaking space
     NBHY = '\u2012'  # non-breaking hyphen
-    matchColonSemicolonNotAfterDigits = re.compile(r"([^\d\s])\s*([:;])\s*([^\s])")
-    matchCommaBetweenDigits = re.compile(r"(\d)\s*([,])\s*(\d)")
-    matchHyphen = re.compile(r"[-\u2010\u2012\u2013\uFE63]")
-    matchHyphenEM = re.compile(r"[\u2014\uFE58]")
-    matchAlphaNumSpaceThenNumber = re.compile(r"(\w)\s+(\d)")
-    # matchAlphaNum = re.compile(r"[A-Za-z0-9]")
-    matchSignificantTex = re.compile(r"[A-Za-z0-9\\{}\[\]]")
-    matchBlankLinePattern = re.compile(r"^\s*$")
+    matchColonSemicolonNotAfterDigits = re.compile(r'([^\d\s])\s*([:;])\s*([^\s])')
+    matchCommaBetweenDigits = re.compile(r'(\d)\s*([,])\s*(\d)')
+    matchHyphen = re.compile(r'[-\u2010\u2012\u2013\uFE63]')
+    matchHyphenEM = re.compile(r'[\u2014\uFE58]')
+    matchAlphaNumSpaceThenNumber = re.compile(r'(\w)\s+(\d)')
+    # matchAlphaNum = re.compile(r'[A-Za-z0-9]')
+    matchSignificantTex = re.compile(r'[A-Za-z0-9\\{}\[\]]')
+    matchBlankLinePattern = re.compile(r'^\s*$')
 
-    matchOrdinalBookSpaces = re.compile(r"([123](|\.|\p{L}]{1,3}))\s")
-    matchChapterVersePattern = re.compile(r"\s+(\d+:\d+)")
+    matchOrdinalBookSpaces = re.compile(r'([123](|\.|\p{L}]{1,3}))\s')
+    matchChapterVersePattern = re.compile(r'\s+(\d+:\d+)')
 
     # endregion
 
@@ -106,7 +115,8 @@ class OBSTexExport:
         self.out_path = out_path
         self.max_chapters = max_chapters
         self.img_res = img_res
-        self.version_number = obs_obj.version
+        # self.version_number = obs_obj.version
+        self.description = obs_obj.description
         # self.checking_level = obs_obj.checking_level
         self.title = obs_obj.title
         self.publisher = obs_obj.publisher
@@ -234,13 +244,13 @@ class OBSTexExport:
 
 
     @staticmethod
-    def get_image(xtr, fid, res):
+    def get_image(xtr:str, fid:str, res:str) -> str:
         img_link = join_url_parts(OBSTexExport.api_url_jpg, res, f'obs-{fid}.jpg')
         return xtr + xtr + xtr + '{{\\externalfigure[{0}][yscale={1}]}}'.format(img_link, 950)  # 950 = 95%
 
 
     @staticmethod
-    def get_frame(xtr, tex_reg):
+    def get_frame(xtr:str, tex_reg:str) -> str:
         xtr2 = xtr + xtr
         xtr3 = xtr + xtr + xtr
 
@@ -251,7 +261,7 @@ class OBSTexExport:
 
 
     @staticmethod
-    def do_not_break_before_chapter_verse(text):
+    def do_not_break_before_chapter_verse(text:str) -> str:
         copy = text
         copy = OBSTexExport.matchHyphen.sub(OBSTexExport.NBHY, copy, OBSTexExport.MATCH_ALL)
         copy = OBSTexExport.matchHyphenEM.sub(OBSTexExport.NBHY, copy, OBSTexExport.MATCH_ALL)
@@ -277,6 +287,7 @@ class OBSTexExport:
 
     @staticmethod
     def filter_apply_docuwiki_start(single_line:str) -> str:
+
         # Order is important here
         single_line = OBSTexExport.matchHeadingFourLevelPattern.sub(r'\1{\\bfd \2}\3', single_line, OBSTexExport.MATCH_ALL)
         single_line = OBSTexExport.matchHeadingThreeLevelPattern.sub(r'\1{\\bfc \2}\3', single_line, OBSTexExport.MATCH_ALL)
@@ -291,11 +302,15 @@ class OBSTexExport:
         # Just boldface for stories
         single_line = OBSTexExport.matchSectionPattern.sub(r'{\\bf \1}', single_line, OBSTexExport.MATCH_ALL)
 
-        single_line = OBSTexExport.matchBoldPattern.sub(r'{\\bf \1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchTripleAsteriskPairs.sub(r'{\\bf {\\em \1}}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchTripleUnderlinePairs.sub(r'{\\bf {\\em \1}}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchDoubleAsteriskPairs.sub(r'{\\bf \1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchDoubleUnderlinePairs.sub(r'{\\bf \1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchSingleAsteriskPairs.sub(r'{\\em \1}', single_line, OBSTexExport.MATCH_ALL)
+        single_line = OBSTexExport.matchSingleUnderlinePairs.sub(r'{\\em \1}', single_line, OBSTexExport.MATCH_ALL)
 
         # The \/ is an end-of-italic correction to add extra whitespace
-        single_line = OBSTexExport.matchItalicPattern.sub(r'{\\em \1\/}', single_line, OBSTexExport.MATCH_ALL)
-        single_line = OBSTexExport.matchUnderLinePattern.sub(r'\\underbar{\1}', single_line, OBSTexExport.MATCH_ALL)
+        # single_line = OBSTexExport.matchDoubleUnderlinePairs.sub(r'\\underbar{\1}', single_line, OBSTexExport.MATCH_ALL)
         single_line = OBSTexExport.matchMonoPattern.sub(r'{\\tt \1}', single_line, OBSTexExport.MATCH_ALL)
         single_line = OBSTexExport.matchRedPattern.sub(r'\\color[middlered]{\1}', single_line, OBSTexExport.MATCH_ALL)
         single_line = OBSTexExport.matchMagentaPattern.sub(r'\\color[magenta]{\1}', single_line, OBSTexExport.MATCH_ALL)
@@ -417,7 +432,7 @@ class OBSTexExport:
             return_string = f"\\midaligned{{\\textdir {'TRT' if self.language_direction=='rtl' else 'TLT'}" \
                                             f"\\tfd{{\\WORD{{{self.title}}}}}}}"
                             # f"    {{\\tfb{{\\WORD{{{self.language_name}}}}}}}"
-        # Display the language name and language code and version
+        # Display the language name and language code
         #   NOTE: tfb->1.2x, tfx->0.8x according to https://wiki.contextgarden.net/Font_Switching#Font_sizes
         return_string += '\n' f"    \\blank[15em]\n" \
                               f"    \\midaligned{{\\tfb{{{self.language_name}}}}}\n" \
@@ -466,6 +481,11 @@ class OBSTexExport:
                 text_only = fr['text'].replace('https://cdn.door43.org/obs/jpg/360px/', OBS_IMAGE_FOLDER_PATH)
 
                 text_only = OBSTexExport.filter_apply_docuwiki(text_only)
+                # TEMP FIX for DOUBLY-emphasised Scripture references at and of each story (RJH Jan2020)
+                if ref_text_only.startswith('_') and ref_text_only.endswith('_'):
+                     # References are automatically emphasised by the template
+                     #  so emphasing again turns it off!!!
+                    ref_text_only = ref_text_only[1:-1]
                 ref_text_only = OBSTexExport.filter_apply_docuwiki(ref_text_only)
                 text_frame = OBSTexExport.get_frame(spaces4, 'toptry' if is_even else 'bottry')
                 image_frame = OBSTexExport.get_image(spaces4, fr['id'], img_res)
@@ -504,6 +524,7 @@ class OBSTexExport:
             output.append(OBSTexExport.end_of_physical_page(spaces4))
             output.append(spaces4 + '\\page[yes]')
         return '\n'.join(output)
+    # end of export_chapters function
 
 
     def run(self) -> None:
@@ -530,7 +551,7 @@ class OBSTexExport:
         else:
             output_front_license = ''
         # TODO: Do these strings need to be translated???
-        output_front_license += f"\n\nVersion {self.version_number}, PDF created {datetime.date.today()}."
+        output_front_license += f"\n\nPDF created {datetime.date.today()} from {self.description}."
 
         output_back = self.export_matter(self.back_matter, test=False)
 
@@ -576,3 +597,4 @@ class OBSTexExport:
         write_file(self.out_path, full_output)
 
         sys.stdout = remember_out
+    # end of run()

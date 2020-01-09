@@ -12,9 +12,17 @@ ENV STATIC_PATH /app/obs-pdf/output
 ENV NGINX_TIMEOUT 300
 
 # Define environment variables
+ENV REDIS_URL redis://172.21.0.2:6379
+ENV QUEUE_PREFIX dev-
+ENV DEBUG_MODE True
 # NOTE: The following environment variables are expected to be set for testing:
 #	AWS_ACCESS_KEY_ID
 #	AWS_SECRET_ACCESS_KEY
+# NOTE: The following environment variables can be set:
+#	QUEUE_PREFIX dev- (optional -- defaults to empty string)
+#	DEBUG_MODE True (optional -- defaults to False)
+#   REDIS_URL (optional -- defaults to 'redis://127.0.0.1:6379')
+#   GRAPHITE_URL (optional -- defaults to 'localhost')
 
 # install the obs-pdf app
 RUN cd /app \
@@ -25,5 +33,6 @@ RUN cd /app \
     && pip install --upgrade -r prerequisites.txt \
     && pip install -r requirements.txt
 
-COPY start.sh /start.sh
+COPY start_RqApp.sh /start_RqApp.sh
+COPY start_WebApp.sh /start_WebApp.sh
 COPY entrypoint.sh /entrypoint.sh

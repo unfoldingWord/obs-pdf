@@ -1,3 +1,4 @@
+from typing import Dict, Optional, Any
 import codecs
 import json
 import os
@@ -8,7 +9,7 @@ from mimetypes import MimeTypes
 import yaml
 
 
-def unzip(source_file, destination_dir):
+def unzip(source_file, destination_dir:str) -> None:
     """
     Unzips <source_file> into <destination_dir>.
     :param str|unicode source_file: The name of the file to read
@@ -18,7 +19,7 @@ def unzip(source_file, destination_dir):
         zf.extractall(destination_dir)
 
 
-def add_file_to_zip(zip_file, file_name, arc_name=None, compress_type=None):
+def add_file_to_zip(zip_file:str, file_name:str, arc_name=None, compress_type=None) -> None:
     """
     Zip <file_name> into <zip_file> as <arc_name>.
     :param str|unicode zip_file: The file name of the zip file
@@ -30,7 +31,7 @@ def add_file_to_zip(zip_file, file_name, arc_name=None, compress_type=None):
         zf.write(file_name, arc_name, compress_type)
 
 
-def make_dir(dir_name, linux_mode=0o755, error_if_not_writable=False):
+def make_dir(dir_name, linux_mode=0o755, error_if_not_writable=False) -> None:
     """
     Creates a directory, if it doesn't exist already. If the directory does exist, and <error_if_not_writable> is True,
     the directory will be checked for write ability.
@@ -45,7 +46,7 @@ def make_dir(dir_name, linux_mode=0o755, error_if_not_writable=False):
             raise IOError('Directory {0} is not writable.'.format(dir_name))
 
 
-def load_json_object(file_name, default=None):
+def load_json_object(file_name, default=None) -> Dict[str,Any]:
     """
     Deserialized <file_name> into a Python object
     :param str|unicode file_name: The name of the file to read
@@ -138,10 +139,16 @@ def copy_tree(src, dst, symlinks=False, ignore=None):
                 shutil.copy2(s, d)
 
 
-def remove_tree(dir_path, ignore_errors=True):
+def remove_tree(dir_path:str, ignore_errors=True) -> None:
     if os.path.isdir(dir_path):
         shutil.rmtree(dir_path, ignore_errors=ignore_errors)
 
 
-if __name__ == '__main__':
-    pass
+def empty_folder(folder_path:str, only_prefix:Optional[str]=None) -> None:
+    for filename in os.listdir(folder_path):
+        if not only_prefix or filename.startswith(only_prefix):
+            filepath = os.path.join(folder_path, filename)
+            try:
+                shutil.rmtree(filepath)
+            except OSError:
+                os.remove(filepath)

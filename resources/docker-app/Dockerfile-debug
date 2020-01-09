@@ -19,5 +19,6 @@ RUN cd /app/obs-pdf \
     && pip install --upgrade -r prerequisites.txt \
     && pip install -r requirements.txt
 
-COPY resources/docker-app/start.sh /start.sh
+COPY resources/docker-app/start_RqApp.sh /start_RqApp.sh
+COPY resources/docker-app/start_WebApp.sh /start_WebApp.sh
 COPY resources/docker-app/entrypoint.sh /entrypoint.sh
