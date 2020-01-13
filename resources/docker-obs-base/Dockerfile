@@ -1,4 +1,5 @@
-FROM tiangolo/uwsgi-nginx-flask:python3.7
+#FROM tiangolo/uwsgi-nginx-flask:python3.7
+FROM python:slim
 
 # install packages, nodejs, and the OBS images
 RUN apt-get update \

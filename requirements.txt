@@ -1,12 +1,12 @@
 # For original Flask/UWSGI/NGINX app only
-uwsgi==2.0.18
+# uwsgi==2.0.18
 
 # For new RQ app only
 statsd==3.3.0
 watchtower==0.7.3
 
 # Should eventually only need ONE of the following
-Flask==1.1.1
+# Flask==1.1.1
 rq==1.2.0
 
 # Common for both
