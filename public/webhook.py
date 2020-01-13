@@ -21,8 +21,8 @@ import logging
 # Library (PyPi) imports
 from rq import get_current_job, Queue
 from statsd import StatsClient # Graphite front-end
-from boto3 import Session
-from watchtower import CloudWatchLogHandler
+from boto3 import Session # AWS S3 handler
+from watchtower import CloudWatchLogHandler # AWS CloudWatch log handler
 
 # Local imports
 from rq_settings import prefix, debug_mode_flag, webhook_queue_name
@@ -33,7 +33,7 @@ from lib.pdf_from_dcs import PdfFromDcs
 
 if prefix not in ('', 'dev-'):
     logging.critical(f"Unexpected prefix: {prefix!r} -- expected '' or 'dev-'")
-tx_stats_prefix = f"tx.{'dev' if prefix else 'prod'}.PDF"
+tx_stats_prefix = f"tx.{'dev' if prefix else 'prod'}"
 job_handler_stats_prefix = f"{tx_stats_prefix}.job-handler"
 
 
@@ -122,7 +122,7 @@ def job(queued_json_payload:Dict[str,Any]) -> None:
     """
     logger.debug("tX PDF JobHandler received a job" + (" (in debug mode)" if debug_mode_flag else ""))
     start_time = time()
-    stats_client.incr(f'{job_handler_stats_prefix}.jobs.attempted')
+    stats_client.incr(f'{job_handler_stats_prefix}.jobs.PDF.attempted')
 
     logger.info(f"Clearing /tmp folder…")
     empty_folder('/tmp/', only_prefix='tX_') # Stops failed jobs from accumulating in /tmp
@@ -131,8 +131,8 @@ def job(queued_json_payload:Dict[str,Any]) -> None:
     our_queue= Queue(webhook_queue_name, connection=get_current_job().connection)
     len_our_queue = len(our_queue) # Should normally sit at zero here
     # logger.debug(f"Queue '{webhook_queue_name}' length={len_our_queue}")
-    stats_client.gauge(f'{tx_stats_prefix}.enqueue-job.queue.length.current', len_our_queue)
-    logger.info(f"Updated stats for '{tx_stats_prefix}.enqueue-job.queue.length.current' to {len_our_queue}")
+    stats_client.gauge(f'{tx_stats_prefix}.enqueue-job.queue.PDF.length.current', len_our_queue)
+    logger.info(f"Updated stats for '{tx_stats_prefix}.enqueue-job.queue.PDF.length.current' to {len_our_queue}")
 
     try:
         job_descriptive_name = process_PDF_job(prefix, queued_json_payload)
@@ -164,13 +164,13 @@ def job(queued_json_payload:Dict[str,Any]) -> None:
         raise e # We raise the exception again so it goes into the failed queue
 
     elapsed_milliseconds = round((time() - start_time) * 1000)
-    stats_client.timing(f'{job_handler_stats_prefix}.job.duration', elapsed_milliseconds)
+    stats_client.timing(f'{job_handler_stats_prefix}.job.PDF.duration', elapsed_milliseconds)
     if elapsed_milliseconds < 2000:
         logger.info(f"{prefix}tX job handling for {job_descriptive_name} completed in {elapsed_milliseconds:,} milliseconds.")
     else:
         logger.info(f"{prefix}tX job handling for {job_descriptive_name} completed in {round(time() - start_time)} seconds.")
 
-    stats_client.incr(f'{job_handler_stats_prefix}.jobs.completed')
+    stats_client.incr(f'{job_handler_stats_prefix}.jobs.PDF.completed')
     main_watchtower_log_handler.close() # Ensure queued logs are uploaded to AWS CloudWatch
 # end of job function
 
