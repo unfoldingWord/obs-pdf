@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from typing import List, Tuple, Union
 import codecs
 import datetime
 import re
@@ -8,7 +9,6 @@ import subprocess
 import time
 import os
 from os.path import isfile, isdir
-from typing import List
 import traceback
 
 from lib.general_tools.app_utils import get_output_dir, get_resources_dir
@@ -23,39 +23,69 @@ from lib.obs.obs_tex_export import OBSTexExport
 
 AWS_REGION_NAME = 'us-west-2'
 CDN_BUCKET_NAME = 'cdn.door43.org'
-CDN_FOLDER = 'obs/auto_PDFs' # Folder inside the CDN bucket
-# CDN_FOLDER = 'tx/job/auto_PDFs' # Folder inside the CDN bucket -- this one has 1-DAY AUTODELETE
+OLD_CDN_FOLDER = 'obs/auto_PDFs' # Folder inside the CDN bucket
+# OLD_CDN_FOLDER = 'tx/job/auto_PDFs' # Folder inside the CDN bucket -- this one has 1-DAY AUTODELETE
 DOOR43_SITE_URL = 'https://git.door43.org'
 
 
 
 class PdfFromDcs:
+    """
+    Called from Flask after accepting payload.
+    """
 
-    def __init__(self, parameter_type: str, parameter: str) -> None:
+    def __init__(self, prefix:str, parameter_type:str, parameter:Union[str,Tuple[str,str,str]]) -> None:
         """
+        prefix is '' or 'dev-'
+
         parameter_type is either
             'Catalog_lang_code' where a language code (e.g., 'en' or 'es-419' is given)
             or
-            'Door43_repo' where a repo username/repoName is given.
+            'Door43_repo' where a repo username/repoName is given
+            or
+            'username_repoName_spec' where three parameters are given.
 
-        parameter is the string value itself
+        parameter is the string value itself or a tuple with the three strings.
         """
+        assert prefix in ('','dev-')
+        assert parameter_type in ('Catalog_lang_code','Door43_repo','username_repoName_spec')
+        assert len(parameter) in (1,3)
+        
+        self.prefix = prefix
         self.parameter_type = parameter_type
         self.parameter = parameter
         self.output_msgs = ''
         self.output_msg_filepath = '/tmp/last_output_msgs.txt'
+
+        self.prefixed_bucket_name = f'{self.prefix}{CDN_BUCKET_NAME}'
+
+        self.output_msg(f"{datetime.datetime.now()} => Starting up with type={parameter_type} and parameter(s)={parameter}…\n")
         self.lang_code = self.given_repo_spec = None
-        if parameter_type == 'Catalog_lang_code':
+        if self.parameter_type == 'Catalog_lang_code':
+            assert isinstance(parameter, str)
             self.lang_code = parameter
-        elif parameter_type == 'Door43_repo':
+            self.cdn_folder = OLD_CDN_FOLDER
+            self.description = f'D43 Catalog {self.lang_code}'
+            self.filename_bit = parameter
+        elif self.parameter_type == 'Door43_repo':
+            assert isinstance(parameter, str)
             self.given_repo_spec = parameter.strip('/')
-            self.user_name, self.repo_name = self.given_repo_spec.split('/')
+            self.username, self.repo_name = self.given_repo_spec.split('/')
+            self.cdn_folder = OLD_CDN_FOLDER
+            self.description = self.given_repo_spec
+            self.filename_bit = self.given_repo_spec.replace('/','--')
+        elif self.parameter_type == 'username_repoName_spec':
+            assert isinstance(parameter, tuple)
+            self.username, self.repo_name, self.repo_spec = parameter
+            self.cdn_folder = f'u/{self.username}/{self.repo_name}/{self.repo_spec}'
+            self.description = f'{self.username}/{self.repo_name}--{self.repo_spec}'
+            self.filename_bit = f'{self.username}--{self.repo_name}--{self.repo_spec}'
         else:
-            err_msg = f"Unrecognized parameter type: '{parameter_type}'\n"
+            err_msg = f"Unrecognized parameter type: '{self.parameter_type}'\n"
             print(f"ERROR: {err_msg}")
             self.output_msg(err_msg)
             raise TypeError
-        self.download_dirpath = f"/tmp/obs-to-pdf/{parameter.replace('/','--')}-{int(time.time())}/"
+        self.tmp_download_dirpath = f"/tmp/obs-to-pdf/{self.filename_bit}--{int(time.time())}/"
 
         # AWS credentials -- get the secret ones from environment variables
         try:
@@ -63,7 +93,7 @@ class PdfFromDcs:
             self.aws_secret_access_key = os.environ['AWS_SECRET_ACCESS_KEY']
         except Exception as e:
             err_msg = f"Exception in __init__: {e}: {traceback.format_exc()}\n"
-            print(f"ERROR: {err_msg}")
+            # print(f"ERROR: {err_msg}")
             self.output_msg(err_msg)
             raise e
     # end of PdfFromDcs.init function
@@ -74,7 +104,7 @@ class PdfFromDcs:
 
 
     # noinspection PyUnusedLocal
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         pass
 
 
@@ -96,9 +126,9 @@ class PdfFromDcs:
             skip that.
         Download the correct OBS zipped data.
             Unzip and check the OBS data.
-        Call PdfFromDcs.create_pdf function to make the PDF
+        Call PdfFromDcs.create_and_upload_pdf function to make the PDF
         """
-        self.output_msg(f"{datetime.datetime.now()} => Starting OBS PDF processing for '{self.parameter}'…\n")
+        self.output_msg(f"{datetime.datetime.now()} => Starting OBS PDF processing for {self.description}…\n")
 
         # Clean up left-over files from any previous runs
         self.cleanup_files()
@@ -106,8 +136,7 @@ class PdfFromDcs:
         # Initialize some variables
         today = ''.join(str(datetime.date.today()).rsplit(str('-'))[0:3])  # str(datetime.date.today())
         # self.download_dir = '/tmp/obs-to-pdf/{0}-{1}'.format(self.lang_code, int(time.time()))
-        make_dir(self.download_dirpath)
-        downloaded_filepath = f'{self.download_dirpath}/obs.zip'
+        make_dir(self.tmp_download_dirpath)
 
         if self.parameter_type == 'Catalog_lang_code':
             # Get the catalog
@@ -170,33 +199,38 @@ class PdfFromDcs:
                 raise ValueError(err_msg)
 
             source_zip_url = found_sources[0]
-            source_dirpath = os.path.join(self.download_dirpath, f'{self.lang_code}_obs/')
+            tmp_source_dirpath = os.path.join(self.tmp_download_dirpath, f'{self.lang_code}_obs/')
 
         elif self.parameter_type == 'Door43_repo':
             source_zip_url = f'{DOOR43_SITE_URL}/{self.given_repo_spec}/archive/master.zip'
-            source_dirpath = os.path.join(self.download_dirpath, self.repo_name)
+            tmp_source_dirpath = os.path.join(self.tmp_download_dirpath, self.repo_name)
+
+        elif self.parameter_type == 'username_repoName_spec':
+            source_zip_url = f'{DOOR43_SITE_URL}/{self.username}/{self.repo_name}/archive/{self.repo_spec}.zip'
+            tmp_source_dirpath = os.path.join(self.tmp_download_dirpath, self.repo_name)
 
 
-        # 2. Download then unzip
+        # 2. Download source zip, then unzip
         self.output_msg(f"{datetime.datetime.now()} => Downloading '{source_zip_url}'…\n")
-        download_file(source_zip_url, downloaded_filepath)
-        unzip(downloaded_filepath, self.download_dirpath)
+        downloaded_zip_tmp_filepath = f'{self.tmp_download_dirpath}/obs.zip'
+        download_file(source_zip_url, downloaded_zip_tmp_filepath)
+        unzip(downloaded_zip_tmp_filepath, self.tmp_download_dirpath)
 
         # 3. Check for valid repository structure
-        manifest_filepath = os.path.join(source_dirpath, 'manifest.yaml')
+        manifest_filepath = os.path.join(tmp_source_dirpath, 'manifest.yaml')
         if not isfile(manifest_filepath):
             err_msg = "Did not find manifest.json in the resource container"
             self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
             raise FileNotFoundError(err_msg)
 
-        content_dirpath = os.path.join(source_dirpath, 'content/')
+        content_dirpath = os.path.join(tmp_source_dirpath, 'content/')
         if not isdir(content_dirpath):
             err_msg = "Did not find the content directory in the resource container"
             self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
             raise NotADirectoryError(err_msg)
 
         # 4. Read the manifest (status, version, localized name, etc)
-        self.output_msg(f"{datetime.datetime.now()} => Reading the '{self.parameter}' manifest…\n")
+        self.output_msg(f"{datetime.datetime.now()} => Reading the {self.description} manifest…\n")
         manifest = load_yaml_object(manifest_filepath)
 
         # 5. Initialize OBS objects
@@ -208,10 +242,11 @@ class PdfFromDcs:
         obs_obj.language_direction = manifest['dublin_core']['language']['direction']
         obs_obj.version = manifest['dublin_core']['version']
         obs_obj.publisher = manifest['dublin_core']['publisher']
+        obs_obj.description = self.description
         # obs_obj.checking_level = manifest['checking']['checking_level']
 
         # 6. Import the chapter data
-        self.output_msg(f"{datetime.datetime.now()} => Reading the chapter files…\n")
+        self.output_msg(f"{datetime.datetime.now()} => Reading the {self.description} chapter files…\n")
         obs_obj.chapters = self.load_obs_chapters(content_dirpath)
         obs_obj.chapters.sort(key=lambda c: int(c['number']))
 
@@ -244,11 +279,11 @@ class PdfFromDcs:
             raise OBSError(err_msg)
         obs_obj.back_matter = self.remove_trailing_hashes(read_file(back_filepath), 'back-matter')
 
-        return self.create_pdf(obs_obj)
+        return self.create_and_upload_pdf(obs_obj) # Should return upload URL
     # end of PdfFromDcs.run()
 
 
-    def create_pdf(self, obs_obj:OBS) -> str:
+    def create_and_upload_pdf(self, obs_obj:OBS) -> str:
         """
         Called from PdfFromDcs.run() above.
 
@@ -256,28 +291,28 @@ class PdfFromDcs:
         :param obs_obj: OBS
         :return: S3 uploaded URL
         """
+        self.output_msg(f"{datetime.datetime.now()} => Beginning {self.description} PDF generation…\n")
+
+        out_dirpath = os.path.join(self.tmp_download_dirpath, 'make_pdf/')
+        make_dir(out_dirpath)
+
+        obs_language_id = obs_obj.language_id
+        self.output_msg(f"    obs_language_id = '{obs_language_id}'\n")
+
         try:
-            self.output_msg(f"{datetime.datetime.now()} => Beginning PDF generation…\n")
-
-            out_dirpath = os.path.join(self.download_dirpath, 'make_pdf')
-            make_dir(out_dirpath)
-
-            obs_language_id = obs_obj.language_id
-
             # make sure the noto language file exists
             noto_filepath = os.path.join(get_resources_dir(), 'tex', 'noto-{0}.tex'.format(obs_language_id))
             if not isfile(noto_filepath):
                 shutil.copy2(os.path.join(get_resources_dir(), 'tex', 'noto-en.tex'), noto_filepath)
 
             # generate a tex file
-            self.output_msg(f"{datetime.datetime.now()} => Generating TeX file…\n")
             tex_filepath = os.path.join(out_dirpath, f'{obs_language_id}.tex')
-
-            # make sure it doesn't already exist
+            self.output_msg(f"{datetime.datetime.now()} => Generating TeX file at {tex_filepath}…\n")
             if isfile(tex_filepath):
-                os.remove(tex_filepath)
+                os.remove(tex_filepath) # make sure it doesn't already exist
 
-            with OBSTexExport(obs_obj=obs_obj, out_path=tex_filepath, max_chapters=0, img_res='360px') as tex:
+            with OBSTexExport(obs_obj=obs_obj, out_path=tex_filepath,
+                                        max_chapters=0, img_res='360px') as tex:
                 tex.run()
 
             # Run ConTeXt
@@ -306,16 +341,16 @@ class PdfFromDcs:
 
             self.output_msg(f"{datetime.datetime.now()} => Running ConTeXt -- this may take several minutes…\n")
             try:
-                std_out = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, cwd=out_dirpath)
+                std_out = subprocess.check_output(cmd, shell=True,
+                                                  stderr=subprocess.STDOUT, cwd=out_dirpath)
                 self.output_msg(f"{datetime.datetime.now()} => Getting ConTeXt output…\n")
                 std_out = re.sub(r'\n\n+', '\n', std_out.decode('utf-8'), flags=re.MULTILINE)
                 write_file(out_log, std_out)
 
                 err_lines = re.findall(r'(^tex error.+)\n?', std_out, flags=re.MULTILINE)
-
                 if err_lines:
                     write_file(err_log_path, '\n'.join(err_lines))
-                    err_msg = f"Errors were generated by ConTeXt. See {err_log_path}."
+                    err_msg = f"Error lines were generated by ConTeXt. See {err_log_path}."
                     self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                     raise ChildProcessError(err_msg)
 
@@ -334,49 +369,54 @@ class PdfFromDcs:
                 self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
                 raise ChildProcessError(err_msg)
 
-            # PDF file is in out_dir
-            pdf_current_filepath = os.path.join(out_dirpath, f'{obs_language_id}.pdf')
-            version = obs_obj.version.replace('.', '_')
-            if version[0:1] != 'v':
-                version = f'v{version}'
-            # TODO: We might want to adjust this once things become more final
-            pdf_desired_name = f'Door43-Catalog--{obs_language_id}_obs-{version}.pdf' \
-                                    if self.parameter_type == 'Catalog_lang_code' \
-                            else f'{self.user_name}--{obs_language_id}_obs-{version}.pdf'
-
-            # Copy the new PDF file to the /app/obs-pdf/output/{obs_lang_code}/ folder
-            # self.output_msg(f"{datetime.datetime.now()} => Copying the '{obs_lang_code}' PDF file to output directory…\n")
-            # output_dir = os.path.join(get_output_dir(), obs_lang_code)
-            # if not isdir(output_dir):
-            #     make_dir(output_dir, linux_mode=0o777, error_if_not_writable=True)
-            # pdf_destination_filepath = os.path.join(output_dir, pdf_desired_name)
-            # self.output_msg(f"  Copying {pdf_current_filepath} to {pdf_destination_filepath}…\n")
-            # shutil.copyfile(pdf_current_filepath, pdf_destination_filepath)
-
-            # Upload the PDF to our AWS S3 bucket
-            self.output_msg(f"{datetime.datetime.now()} => Uploading '{pdf_desired_name}' to S3 {CDN_BUCKET_NAME}…\n")
-            cdn_s3_handler = S3Handler(bucket_name=CDN_BUCKET_NAME,
-                                       aws_access_key_id=self.aws_access_key_id,
-                                       aws_secret_access_key=self.aws_secret_access_key,
-                                       aws_region_name=AWS_REGION_NAME)
-            s3_commit_key = f'{CDN_FOLDER}/{pdf_desired_name}'
-            cdn_s3_handler.upload_file(pdf_current_filepath, s3_commit_key)
-
-            # return pdf link
-            self.output_msg(f"Should be viewable at https://{CDN_BUCKET_NAME}/{s3_commit_key}.\n")
-            return f'https://{CDN_BUCKET_NAME}/{s3_commit_key}'
-
         except Exception as e:
-            err_msg = f"Exception in create_pdf: {e}: {traceback.format_exc()}\n"
+            err_msg = f"Exception in create_and_upload_pdf: {e}: {traceback.format_exc()}\n"
             print(f"ERROR: {err_msg}")
             self.output_msg(err_msg)
             raise e
 
         finally:
-            self.output_msg(f"{datetime.datetime.now()} => Exiting PDF generation code.\n")
+            self.output_msg(f"{datetime.datetime.now()} => Exiting ConTeXt PDF generation code…\n")
             # with open(, 'wt') as log_output_file:
                 # log_output_file.write(self.output)
-    # end of PdfFromDcs.create_pdf function
+
+        # PDF file is in out_dirpath
+        pdf_current_filepath = os.path.join(out_dirpath, f'{obs_language_id}.pdf')
+        self.output_msg(f"{datetime.datetime.now()} => Finding PDF at {pdf_current_filepath}…\n")
+        # version = obs_obj.version.replace('.', '_')
+        # if version[0:1] != 'v':
+        #     version = f'v{version}'
+        # # TODO: We might want to adjust this once things become more final
+        # if self.parameter_type == 'Catalog_lang_code':
+        #     pdf_desired_name = f'Door43-Catalog--{obs_language_id}_obs--{version}.pdf'
+        # elif self.parameter_type == 'Door43_repo':
+        #     pdf_desired_name = f'{self.username}--{self.repo_name}--{version}.pdf'
+        # elif self.parameter_type == 'username_repoName_spec':
+        #     pdf_desired_name = f'{self.username}--{self.repo_name}--{self.repo_spec}.pdf'
+        pdf_desired_name = f'{self.filename_bit}.pdf'
+
+        # Copy the new PDF file to the /app/obs-pdf/output/{obs_lang_code}/ folder
+        # self.output_msg(f"{datetime.datetime.now()} => Copying the '{obs_lang_code}' PDF file to output directory…\n")
+        # output_dir = os.path.join(get_output_dir(), obs_lang_code)
+        # if not isdir(output_dir):
+        #     make_dir(output_dir, linux_mode=0o777, error_if_not_writable=True)
+        # pdf_destination_filepath = os.path.join(output_dir, pdf_desired_name)
+        # self.output_msg(f"  Copying {pdf_current_filepath} to {pdf_destination_filepath}…\n")
+        # shutil.copyfile(pdf_current_filepath, pdf_destination_filepath)
+
+        # Upload the PDF to our AWS S3 bucket
+        self.output_msg(f"{datetime.datetime.now()} => Uploading '{pdf_desired_name}' to S3 {self.prefixed_bucket_name}/{self.cdn_folder}…\n")
+        cdn_s3_handler = S3Handler(bucket_name=self.prefixed_bucket_name,
+                                    aws_access_key_id=self.aws_access_key_id,
+                                    aws_secret_access_key=self.aws_secret_access_key,
+                                    aws_region_name=AWS_REGION_NAME)
+        s3_commit_key = f'{self.cdn_folder}/{pdf_desired_name}'
+        cdn_s3_handler.upload_file(pdf_current_filepath, s3_commit_key)
+
+        # return pdf link
+        self.output_msg(f"Should be viewable at https://{self.prefixed_bucket_name}/{s3_commit_key}.\n")
+        return f'https://{self.prefixed_bucket_name}/{s3_commit_key}'
+    # end of PdfFromDcs.create_and_upload_pdf function
 
 
     @staticmethod

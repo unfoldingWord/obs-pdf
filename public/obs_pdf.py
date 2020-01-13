@@ -9,6 +9,10 @@ from lib.general_tools.file_utils import read_file
 from lib.pdf_from_dcs import PdfFromDcs
 
 
+prefix = os.getenv('QUEUE_PREFIX', '') # Gets (optional) QUEUE_PREFIX environment variable -- set to 'dev-' for development
+assert prefix in ('','dev-')
+
+
 app = Flask(__name__)
 
 project_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -36,12 +40,22 @@ def pdf_from_dcs():
                 print(f"\n\nStarting to process OBS PDF request for Door43 repo '{parameter}'…")
                 parameter_type = 'Door43_repo'
             else:
-                return 'Bad Request - invalid Door43 repo specification', 400
-        else: # can't find any valid parameter
-            return 'Bad Request - no lang_code or repo', 400
+                return 'Bad Request - invalid Door43 username/repo specification', 400
+        else:
+            parameter1 = request.args.get('username', '')
+            if parameter1:
+                parameter2 = request.args.get('repo_name', '')
+                parameter3 = request.args.get('spec', '')
+                if not parameter2 or not parameter3:
+                    return 'Bad Request - repo_name and spec should follow username', 400
+                print(f"\n\nStarting to process OBS PDF request for Door43 '{parameter1}'/'{parameter2}'-'{parameter3}'…")
+                parameter_type = 'username_repoName_spec'
+                parameter = (parameter1, parameter2, parameter3)
+            else: # can't find any valid parameter
+                return 'Bad Request - no lang_code or repo or username', 400
 
     try:
-        with PdfFromDcs(parameter_type, parameter) as f:
+        with PdfFromDcs(prefix, parameter_type, parameter) as f:
             run_result = f.run()
 
     except ChildProcessError:
