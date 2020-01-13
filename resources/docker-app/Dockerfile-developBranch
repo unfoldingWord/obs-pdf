@@ -33,6 +33,9 @@ RUN cd /app \
     && pip install --upgrade -r prerequisites.txt \
     && pip install -r requirements.txt
 
-COPY start_RqApp.sh /start_RqApp.sh
-COPY start_WebApp.sh /start_WebApp.sh
-COPY entrypoint.sh /entrypoint.sh
+#COPY start_WebApp.sh /start_WebApp.sh
+#COPY entrypoint.sh /entrypoint.sh
+
+COPY start_RqApp_named.sh /start_RqApp_named.sh
+
+CMD [ "/start_RqApp_named.sh" ]

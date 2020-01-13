@@ -18,7 +18,13 @@ RUN cd /app/obs-pdf \
     && pip install --upgrade pip \
     && pip install --upgrade -r prerequisites.txt \
     && pip install -r requirements.txt
+RUN cd /
 
-COPY resources/docker-app/start_RqApp.sh /start_RqApp.sh
-COPY resources/docker-app/start_WebApp.sh /start_WebApp.sh
-COPY resources/docker-app/entrypoint.sh /entrypoint.sh
+#COPY resources/docker-app/start_WebApp.sh /start_WebApp.sh
+#COPY resources/docker-app/entrypoint.sh /entrypoint.sh
+
+COPY resources/docker-app/start_RqApp_named.sh /start_RqApp_named.sh
+COPY resources/docker-app/start_RqApp_anon.sh /start_RqApp_anon.sh
+
+# NOTE: No startup command here so you have to do it manually
+#   i.e., /start_RqApp_anon.sh (lets RQ choose the worker name)
