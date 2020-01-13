@@ -10,12 +10,9 @@ develop:
 
 #### NOTE: Python 3 Only
 
-#### NOTE: This project is designed so that it can generate a Docker container which serves the application using Nginx.
+#### NOTE: This project is designed so that it can generate a Docker container which serves the application by responding to a RQ queue.
 
-The Flask app has 2 endpoints:
-
-* `/test` which serves a simple test page
-* `/?lang_code=xx` which attempts to generate an OBS PDF file for the requested language code (xx). If successful the client is redirected to the PDF file. If not successful, the client will receive a detailed description of the problem.
+NOT FINISHED YET
 
 
 ## Container Structure
@@ -30,19 +27,23 @@ The smallest EC2 instance I was able to get it to run on successfully is `t3.sma
 
 This is the command line used to start the Docker container on the EC2 instance:
 ```bash
-docker run --name obs-pdf -p 8080:80 -dit --cpus=1.0 --restart unless-stopped unfoldingWord/obs-pdf:latest
+docker run --name obs-pdf -p 8080:80 -dit --cpus=1.0 --restart unless-stopped unfoldingWord/obs-pdf:master
+```
+
+#### Development
+For testing and debugging, start the Docker container with this command:
+```bash
+docker run --name obs-pdf --rm -p 8080:80 -it --cpus=0.5 unfoldingWord/obs-pdf:develop bash
 ```
 
 #### Debugging
 For testing and debugging, start the Docker container with this command:
 ```bash
-docker run --name obs-pdf --rm -p 8080:80 -it --cpus=0.5 unfoldingWord/obs-pdf:latest bash
+docker run --name obs-pdf --rm -p 8080:80 -it --cpus=0.5 unfoldingWord/obs-pdf:debug bash
 ```
 
 Then, inside the container, run these commands to start the application:
 ```bash
 cd /
-./start_WebApp.sh
-or
 ./start_RqApp.sh
 ```

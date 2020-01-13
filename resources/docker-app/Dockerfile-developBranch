@@ -25,7 +25,7 @@ ENV DEBUG_MODE True
 #   GRAPHITE_URL (optional -- defaults to 'localhost')
 
 # install the obs-pdf app FROM GitHub
-RUN cd /app \
+RUN mkdir /app && cd /app \
     && git clone --single-branch -b develop https://github.com/unfoldingWord-dev/obs-pdf.git \
     && cd /app/obs-pdf \
     && git pull \

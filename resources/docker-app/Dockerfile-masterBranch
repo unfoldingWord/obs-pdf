@@ -23,7 +23,7 @@ FROM unfoldingword/obs-base:latest
 #	DEBUG_MODE True (optional -- defaults to False)
 
 # install the obs-pdf app
-RUN cd /app \
+RUN mkdir /app && cd /app \
     && git clone --single-branch -b master https://github.com/unfoldingWord-dev/obs-pdf.git \
     && cd /app/obs-pdf \
     && git pull \
