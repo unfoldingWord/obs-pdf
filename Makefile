@@ -17,8 +17,20 @@ checkEnvVariables:
 		exit 1; \
 	fi
 
+baseStretchImage:
+	docker build --tag unfoldingword/obs-stretch-base:latest resources/docker-slim-python3.8-base/
+
+pushStretchBaseImage:
+	docker push unfoldingword/obs-stretch-base:latest
+
+runStretchBase:
+	docker run --name obs-stretch-base --detach --interactive --tty --cpus=1.0 --restart unless-stopped unfoldingword/obs-stretch-base:latest
+
 baseImage:
 	docker build --tag unfoldingword/obs-base:latest resources/docker-obs-base/
+
+runBase:
+	docker run --name obs-pdf-base --detach --interactive --tty --cpus=1.0 --restart unless-stopped unfoldingword/obs-base:latest
 
 pushBaseImage:
 	docker push unfoldingword/obs-base:latest
@@ -28,11 +40,11 @@ mainImageDebug:
 	docker build --file resources/docker-app/Dockerfile-debug --tag unfoldingword/obs-pdf:debug .
 
 mainImageDev:
-	# Builds from GitHub develop branch
+	# Builds from GitHub develop branch (so any changes must have been pushed)
 	docker build --file resources/docker-app/Dockerfile-developBranch --tag unfoldingword/obs-pdf:develop resources/docker-app/
 
 mainImage:
-	# Builds from GitHub master branch
+	# Builds from GitHub master branch (so any changes must have been merged)
 	docker build --file resources/docker-app/Dockerfile-masterBranch --tag unfoldingword/obs-pdf:master resources/docker-app/
 
 pushMainDevImage:
@@ -53,9 +65,9 @@ runDev: checkEnvVariables
 runDevDebug: checkEnvVariables
 	# After this, inside the container, run these commands to start the application:
 	#	cd /
-	#	./start_WebApp.sh
-	# or
 	#	./start_RqApp.sh
+	# or
+	#	./test_en.sh
 	#
 	# conTeXt logs will be in /app/obs-pdf/output/ (context.err and context.out)
 	docker run --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env REDIS_URL --env QUEUE_PREFIX="dev-" --env DEBUG_MODE=On --name obs-pdf --rm --publish 8123:80 --interactive --tty --cpus=0.5 unfoldingword/obs-pdf:develop bash
@@ -63,9 +75,9 @@ runDevDebug: checkEnvVariables
 runDebug: checkEnvVariables
 	# After this, inside the container, run these commands to start the application:
 	#	cd /
-	#	./start_WebApp.sh
-	# or
 	#	./start_RqApp.sh
+	# or
+	#	./test_en.sh
 	#
 	# conTeXt logs will be in /app/obs-pdf/output/ (context.err and context.out)
 	# Also look in /tmp/obs-to-pdf/en-xxxx/make_pdf/en.log and en.tex

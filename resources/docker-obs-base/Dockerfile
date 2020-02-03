@@ -1,5 +1,14 @@
-#FROM tiangolo/uwsgi-nginx-flask:python3.7
-FROM python:slim
+#FROM tiangolo/uwsgi-nginx-flask:python3.7 # OBSOLETE because we switched to RQ
+# See https://hub.docker.com/_/python/ for available packages
+# FROM python:3.7-slim-stretch
+# Brings in ConTeXt MkIV 2016.05
+#   but Python 3.7 is not natively compatible with pickle protocol v8
+#       see https://github.com/rq/rq/issues/1168
+#FROM python:3.8-slim-buster
+# Brings in ConTeXt MkIV 2018.04.04 which seems to have different syntax
+FROM unfoldingword/obs-stretch-base:latest
+# Brings in ConTeXt MkIV 2016.05
+#   but has Python 3.8.1
 
 # install packages, nodejs, and the OBS images
 RUN apt-get update \

@@ -50,7 +50,7 @@ class PdfFromDcs:
         assert prefix in ('','dev-')
         assert parameter_type in ('Catalog_lang_code','Door43_repo','username_repoName_spec')
         assert len(parameter) in (1,3)
-        
+
         self.prefix = prefix
         self.parameter_type = parameter_type
         self.parameter = parameter
@@ -299,6 +299,7 @@ class PdfFromDcs:
         obs_language_id = obs_obj.language_id
         self.output_msg(f"    obs_language_id = '{obs_language_id}'\n")
 
+        have_exception = None
         try:
             # make sure the noto language file exists
             noto_filepath = os.path.join(get_resources_dir(), 'tex', 'noto-{0}.tex'.format(obs_language_id))
@@ -344,7 +345,7 @@ class PdfFromDcs:
                 std_out = subprocess.check_output(cmd, shell=True,
                                                   stderr=subprocess.STDOUT, cwd=out_dirpath)
                 self.output_msg(f"{datetime.datetime.now()} => Getting ConTeXt output…\n")
-                std_out = re.sub(r'\n\n+', '\n', std_out.decode('utf-8'), flags=re.MULTILINE)
+                std_out = re.sub(r'\n\n+', '\n', std_out.decode('utf-8', 'backslashreplace'), flags=re.MULTILINE)
                 write_file(out_log, std_out)
 
                 err_lines = re.findall(r'(^tex error.+)\n?', std_out, flags=re.MULTILINE)
@@ -358,7 +359,7 @@ class PdfFromDcs:
                 self.output_msg(f"{datetime.datetime.now()} => ConTeXt process failed!\n")
 
                 # find the tex error lines
-                std_out = e.stdout.decode('utf-8')
+                std_out = e.stdout.decode('utf-8', 'backslashreplace')
                 std_out = re.sub(r'\n\n+', '\n', std_out, flags=re.MULTILINE)
                 err_lines = re.findall(r'(^tex error.+)\n?', std_out, flags=re.MULTILINE)
 
@@ -373,7 +374,11 @@ class PdfFromDcs:
             err_msg = f"Exception in create_and_upload_pdf: {e}: {traceback.format_exc()}\n"
             print(f"ERROR: {err_msg}")
             self.output_msg(err_msg)
-            raise e
+            # raise e
+            err_msg = f"Supressing exception\n"
+            # print(f"ERROR: {err_msg}")
+            self.output_msg(err_msg)
+            have_exception = e
 
         finally:
             self.output_msg(f"{datetime.datetime.now()} => Exiting ConTeXt PDF generation code…\n")
@@ -415,7 +420,10 @@ class PdfFromDcs:
 
         # return pdf link
         self.output_msg(f"Should be viewable at https://{self.prefixed_bucket_name}/{s3_commit_key}.\n")
-        return f'https://{self.prefixed_bucket_name}/{s3_commit_key}'
+        if have_exception is None:
+            return f'https://{self.prefixed_bucket_name}/{s3_commit_key}'
+        return str(have_exception)
+        # raise have_exception
     # end of PdfFromDcs.create_and_upload_pdf function
 
 

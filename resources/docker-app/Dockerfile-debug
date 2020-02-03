@@ -26,5 +26,7 @@ RUN cd /
 COPY resources/docker-app/start_RqApp_named.sh /start_RqApp_named.sh
 COPY resources/docker-app/start_RqApp_anon.sh /start_RqApp_anon.sh
 
+COPY resources/docker-app/test_en.sh /test_en.sh
+
 # NOTE: No startup command here so you have to do it manually
 #   i.e., /start_RqApp_anon.sh (lets RQ choose the worker name)

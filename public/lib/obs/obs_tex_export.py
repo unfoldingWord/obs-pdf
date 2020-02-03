@@ -485,7 +485,7 @@ class OBSTexExport:
                 if ref_text_only.startswith('_') and ref_text_only.endswith('_'):
                      # References are automatically emphasised by the template
                      #  so emphasing again turns it off!!!
-                    ref_text_only = ref_text_only[1:-1]
+                    ref_text_only = ref_text_only[1:-1] # Remove the leading and trailing underline characters
                 ref_text_only = OBSTexExport.filter_apply_docuwiki(ref_text_only)
                 text_frame = OBSTexExport.get_frame(spaces4, 'toptry' if is_even else 'bottry')
                 image_frame = OBSTexExport.get_image(spaces4, fr['id'], img_res)
