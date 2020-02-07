@@ -77,23 +77,33 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     prefix may be '' or 'dev-'.
     payload is the dict passed to tX Enqueue Job as JSON.
 
+    Expects an identifier in the payload of one of the two following forms:
+        '<repo_owner_username>--<repo_name>--<tag_name>', or
+        '<repo_owner_username>--<repo_name>--<branch_name>--commit_hash'.
+
     Returns a job description obtained from the payload.
     """
     logger.debug(f"process_PDF_job( {prefix}, {payload} ) {' (in debug mode)' if debug_mode_flag else ''}")
     assert payload['input_format'] == 'md'
     assert payload['output_format'] == 'pdf'
     assert payload['source'].startswith('https://git.door43.org/')
+    assert payload['source'].count('/') == 6
     assert payload['source'].endswith('.zip')
+                # e.g., 'https://git.door43.org/unfoldingWord/en_obs/archive/master.zip'
+    assert payload['identifier'].count('--') in (2,3)
 
-    # e.g., 'https://git.door43.org/unfoldingWord/en_obs/archive/master.zip'
-    main_source_path = payload['source'][23:-4] # Now 'unfoldingWord/en_obs/archive/master'
-    bits = main_source_path.split('/')
-    assert len(bits) == 4
-    assert bits[2] in ('archive','commit') # What else might it be?
-    parameters = bits[0], bits[1], bits[3]
+    if 0: # OLD CODE
+        main_source_path = payload['source'][23:-4] # Now 'unfoldingWord/en_obs/archive/master'
+        bits = main_source_path.split('/')
+        assert len(bits) == 4
+        assert bits[2] in ('archive','commit') # What else might it be?
+        parameters = bits[0], bits[1], bits[3]
 
-    if 'identifier' in payload: description = payload['identifier']
-    else: description = main_source_path
+        if 'identifier' in payload: description = payload['identifier']
+        else: description = main_source_path
+    else: # New code
+        parameters = payload['identifier'].split('--')
+        assert len(parameters) in (3,4) # Commit hash is optional
 
     logging.debug(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
     try:

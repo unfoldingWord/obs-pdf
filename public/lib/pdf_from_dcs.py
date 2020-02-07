@@ -34,7 +34,7 @@ class PdfFromDcs:
     Called from Flask after accepting payload.
     """
 
-    def __init__(self, prefix:str, parameter_type:str, parameter:Union[str,Tuple[str,str,str]]) -> None:
+    def __init__(self, prefix:str, parameter_type:str, parameter:Union[str,Tuple[str,str,str],Tuple[str,str,str,str]]) -> None:
         """
         prefix is '' or 'dev-'
 
@@ -43,13 +43,13 @@ class PdfFromDcs:
             or
             'Door43_repo' where a repo username/repoName is given
             or
-            'username_repoName_spec' where three parameters are given.
+            'username_repoName_spec' where three or four parameters are given.
 
-        parameter is the string value itself or a tuple with the three strings.
+        parameter is the string value itself or a tuple with the three or four strings.
         """
         assert prefix in ('','dev-')
         assert parameter_type in ('Catalog_lang_code','Door43_repo','username_repoName_spec')
-        assert len(parameter) in (1,3)
+        assert len(parameter) in (1,3,4)
 
         self.prefix = prefix
         self.parameter_type = parameter_type
@@ -60,7 +60,7 @@ class PdfFromDcs:
         self.prefixed_bucket_name = f'{self.prefix}{CDN_BUCKET_NAME}'
 
         self.output_msg(f"{datetime.datetime.now()} => Starting up with type={parameter_type} and parameter(s)={parameter}…\n")
-        self.lang_code = self.given_repo_spec = None
+        self.lang_code = self.given_repo_spec = self.commit_hash = None
         if self.parameter_type == 'Catalog_lang_code':
             assert isinstance(parameter, str)
             self.lang_code = parameter
@@ -76,10 +76,15 @@ class PdfFromDcs:
             self.filename_bit = self.given_repo_spec.replace('/','--')
         elif self.parameter_type == 'username_repoName_spec':
             assert isinstance(parameter, tuple)
-            self.username, self.repo_name, self.repo_spec = parameter
+            if len(parameter) == 3:
+                self.username, self.repo_name, self.repo_spec = parameter
+                self.description = f'{self.username}/{self.repo_name}--{self.repo_spec}'
+                self.filename_bit = f'{self.username}--{self.repo_name}--{self.repo_spec}'
+            elif len(parameter) == 4:
+                self.username, self.repo_name, self.repo_spec, self.commit_hash = parameter
+                self.description = f'{self.username}/{self.repo_name}--{self.repo_spec}--{self.commit_hash}'
+                self.filename_bit = f'{self.username}--{self.repo_name}--{self.repo_spec}--{self.commit_hash}'
             self.cdn_folder = f'u/{self.username}/{self.repo_name}/{self.repo_spec}'
-            self.description = f'{self.username}/{self.repo_name}--{self.repo_spec}'
-            self.filename_bit = f'{self.username}--{self.repo_name}--{self.repo_spec}'
         else:
             err_msg = f"Unrecognized parameter type: '{self.parameter_type}'\n"
             print(f"ERROR: {err_msg}")
@@ -219,7 +224,7 @@ class PdfFromDcs:
         # 3. Check for valid repository structure
         manifest_filepath = os.path.join(tmp_source_dirpath, 'manifest.yaml')
         if not isfile(manifest_filepath):
-            err_msg = "Did not find manifest.json in the resource container"
+            err_msg = "Did not find manifest.yaml in the resource container"
             self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
             raise FileNotFoundError(err_msg)
 
