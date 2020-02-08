@@ -110,7 +110,7 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     try:
         with PdfFromDcs(prefix, parameter_type='username_repoName_spec', parameter=parameters) as f:
             upload_URL = f.run()
-            logger.debug(f"PDF made and uploaded to {upload_URL}")
+            logger.info(f"PDF made and uploaded to {upload_URL}")
 
     except ChildProcessError:
         err_text = 'AN ERROR OCCURRED GENERATING THE PDF\r\n\r\n'
