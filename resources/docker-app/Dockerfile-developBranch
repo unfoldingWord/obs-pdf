@@ -14,7 +14,6 @@ FROM unfoldingword/obs-base:latest
 # Define environment variables
 ENV REDIS_URL redis://172.21.0.2:6379
 ENV QUEUE_PREFIX dev-
-ENV DEBUG_MODE True
 # NOTE: The following environment variables are expected to be set for testing:
 #	AWS_ACCESS_KEY_ID
 #	AWS_SECRET_ACCESS_KEY
