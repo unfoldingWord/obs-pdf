@@ -75,7 +75,7 @@ class PdfFromDcs:
             self.description = self.given_repo_spec
             self.filename_bit = self.given_repo_spec.replace('/','--')
         elif self.parameter_type == 'username_repoName_spec':
-            assert isinstance(parameter, tuple)
+            assert isinstance(parameter, (tuple, list))
             if len(parameter) == 3:
                 self.username, self.repo_name, self.repo_spec = parameter
                 self.description = f'{self.username}/{self.repo_name}--{self.repo_spec}'
