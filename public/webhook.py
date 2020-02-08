@@ -104,6 +104,7 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     else: # New code
         parameters = payload['identifier'].split('--')
         assert len(parameters) in (3,4) # Commit hash is optional
+        description = payload['identifier']
 
     logging.debug(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
     try:
