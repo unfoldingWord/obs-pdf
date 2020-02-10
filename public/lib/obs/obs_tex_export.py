@@ -115,9 +115,7 @@ class OBSTexExport:
         self.out_path = out_path
         self.max_chapters = max_chapters
         self.img_res = img_res
-        # self.version_number = obs_obj.version
-        self.description = obs_obj.description
-        # self.checking_level = obs_obj.checking_level
+        self.description, self.extended_description = obs_obj.description, obs_obj.extended_description
         self.title = obs_obj.title
         self.publisher = obs_obj.publisher
         self.front_matter = obs_obj.front_matter
@@ -125,7 +123,6 @@ class OBSTexExport:
         self.body_json = {'chapters': obs_obj.chapters,
                           'language_id': self.language_id,
                           'language_direction': self.language_direction,
-                        #   'checking_level': self.checking_level,
                           'toctitle': self.title}
 
         self.num_items = 0
@@ -552,6 +549,8 @@ class OBSTexExport:
             output_front_license = ''
         # TODO: Do these strings need to be translated???
         output_front_license += f"\n\nPDF created {datetime.date.today()} from {self.description}."
+        if self.extended_description: # Add an extra small line with more details like the commit hash
+            output_front_license += f"\n    \\tfxx{{(From {self.extended_description}.)}}"
 
         output_back = self.export_matter(self.back_matter, test=False)
 

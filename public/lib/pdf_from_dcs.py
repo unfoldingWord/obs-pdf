@@ -61,6 +61,7 @@ class PdfFromDcs:
 
         self.output_msg(f"{datetime.datetime.now()} => Starting up with type={parameter_type} and parameter(s)={parameter}…\n")
         self.lang_code = self.given_repo_spec = self.commit_hash = None
+        self.extended_description = None
         if self.parameter_type == 'Catalog_lang_code':
             assert isinstance(parameter, str)
             self.lang_code = parameter
@@ -82,8 +83,9 @@ class PdfFromDcs:
                 self.filename_bit = f'{self.username}--{self.repo_name}--{self.repo_spec}'
             elif len(parameter) == 4:
                 self.username, self.repo_name, self.repo_spec, self.commit_hash = parameter
-                self.description = f'{self.username}/{self.repo_name}--{self.repo_spec}--{self.commit_hash}'
-                self.filename_bit = f'{self.username}--{self.repo_name}--{self.repo_spec}--{self.commit_hash}'
+                self.description = f'{self.username}/{self.repo_name}'
+                self.extended_description = f'{self.repo_spec}--{self.commit_hash}'
+                self.filename_bit = f'{self.username}--{self.repo_name}--{self.repo_spec}'
             self.cdn_folder = f'u/{self.username}/{self.repo_name}/{self.repo_spec}'
         else:
             err_msg = f"Unrecognized parameter type: '{self.parameter_type}'\n"
@@ -247,8 +249,7 @@ class PdfFromDcs:
         obs_obj.language_direction = manifest['dublin_core']['language']['direction']
         obs_obj.version = manifest['dublin_core']['version']
         obs_obj.publisher = manifest['dublin_core']['publisher']
-        obs_obj.description = self.description
-        # obs_obj.checking_level = manifest['checking']['checking_level']
+        obs_obj.description, obs_obj.extended_description = self.description, self.extended_description
 
         # 6. Import the chapter data
         self.output_msg(f"{datetime.datetime.now()} => Reading the {self.description} chapter files…\n")
