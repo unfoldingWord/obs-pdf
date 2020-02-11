@@ -26,9 +26,18 @@ from watchtower import CloudWatchLogHandler # AWS CloudWatch log handler
 
 # Local imports
 from rq_settings import prefix, debug_mode_flag, webhook_queue_name
+from lib.aws_tools.s3_handler import S3Handler
 from lib.general_tools.app_utils import get_output_dir
 from lib.general_tools.file_utils import read_file, empty_folder
+from lib.general_tools.url_utils import get_url
 from lib.pdf_from_dcs import PdfFromDcs
+
+
+# The following will be recording in the build log (JSON) file
+MY_NAME = 'ConTeXt OBS PDF creator'
+MY_VERSION_STRING = '1.00'
+CDN_BUCKET_NAME = 'cdn.door43.org'
+AWS_REGION_NAME = 'us-west-2'
 
 
 if prefix not in ('', 'dev-'):
@@ -40,7 +49,6 @@ job_handler_stats_prefix = f"{tx_stats_prefix}.job-handler"
 # Credentials -- get the secret ones from environment variables
 aws_access_key_id = os.environ['AWS_ACCESS_KEY_ID']
 aws_secret_access_key = os.environ['AWS_SECRET_ACCESS_KEY']
-aws_region_name = 'us-west-2'
 
 test_mode_flag = os.getenv('TEST_MODE', '')
 travis_flag = os.getenv('TRAVIS_BRANCH', '')
@@ -54,7 +62,7 @@ log_group_name = f"{'' if test_mode_flag or travis_flag else prefix}tX" \
 logger = logging.getLogger(job_handler_stats_prefix)
 boto3_session = Session(aws_access_key_id=aws_access_key_id,
                     aws_secret_access_key=aws_secret_access_key,
-                    region_name=aws_region_name)
+                    region_name=AWS_REGION_NAME)
 main_watchtower_log_handler = CloudWatchLogHandler(boto3_session=boto3_session,
                                             # use_queues=False, # Because this forked process is quite transient
                                             log_group=log_group_name,
@@ -92,25 +100,36 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
                 # e.g., 'https://git.door43.org/unfoldingWord/en_obs/archive/master.zip'
     assert payload['identifier'].count('--') in (2,3)
 
-    if 0: # OLD CODE
-        main_source_path = payload['source'][23:-4] # Now 'unfoldingWord/en_obs/archive/master'
-        bits = main_source_path.split('/')
-        assert len(bits) == 4
-        assert bits[2] in ('archive','commit') # What else might it be?
-        parameters = bits[0], bits[1], bits[3]
+    parameters = payload['identifier'].split('--')
+    assert len(parameters) in (3,4) # Commit hash is optional
+    description = payload['identifier']
 
-        if 'identifier' in payload: description = payload['identifier']
-        else: description = main_source_path
-    else: # New code
-        parameters = payload['identifier'].split('--')
-        assert len(parameters) in (3,4) # Commit hash is optional
-        description = payload['identifier']
+    repo_owner_username, repo_name, tag_or_branch_name = parameters[:3]
+
+    # See if a JSON log file already exists
+    base_download_url = f'https://s3-us-west-2.amazonaws.com/{prefix}cdn.door43.org'
+    repo_part = f'u/{repo_owner_username}/{repo_name}'
+    filename_part = 'PDF-details.json'
+    json_url = f'{base_download_url}/{repo_part}/{filename_part}'
+    logging.info(f"Checking for JSON build log at {json_url}…")
+    PDF_log_dict = json.loads(get_url(json_url))
+    logging.info(f"Got JSON build log = {PDF_log_dict}")
+
+    if tag_or_branch_name not in PDF_log_dict: PDF_log_dict[tag_or_branch_name] = {}
+    PDF_log_dict[tag_or_branch_name]['PDF_creator'] = MY_NAME
+    PDF_log_dict[tag_or_branch_name]['PDF_creator_version'] = MY_VERSION_STRING
 
     logging.debug(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
     try:
         with PdfFromDcs(prefix, parameter_type='username_repoName_spec', parameter=parameters) as f:
             upload_URL = f.run()
-            logger.info(f"PDF made and uploaded to {upload_URL}")
+            msg = f"PDF made and uploaded to {upload_URL}"
+            logger.info(msg)
+            # Update JSON log file
+            PDF_log_dict[tag_or_branch_name]['status'] = 'success'
+            PDF_log_dict[tag_or_branch_name]['message'] = msg
+            if len(parameters) == 4:
+                PDF_log_dict[tag_or_branch_name]['commit_hash'] = parameters[3]
 
     except ChildProcessError:
         err_text = 'AN ERROR OCCURRED GENERATING THE PDF\r\n\r\n'
@@ -118,8 +137,26 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
         err_text += '\r\n\r\n\r\nFULL ConTeXt OUTPUT\r\n\r\n'
         err_text += read_file(os.path.join(get_output_dir(), 'context.out'))
         logger.critical(err_text)
+        PDF_log_dict[tag_or_branch_name]['status'] = 'error'
+        PDF_log_dict[tag_or_branch_name]['message'] = "Error within ConTeXt PDF build system"
+
+    except Exception as e:
+        PDF_log_dict[tag_or_branch_name]['status'] = 'error'
+        PDF_log_dict[tag_or_branch_name]['message'] = str(e)
+
+    # Save (new/updated) JSON log file
+    PDF_log_dict['processed_at'] = datetime.utcnow()
+    logging.info(f"Final build log = {PDF_log_dict}")
+    logging.info(f"Saving JSON build log to {json_url}…")
+    cdn_s3_handler = S3Handler(bucket_name=f'{prefix}{CDN_BUCKET_NAME}',
+                                aws_access_key_id=aws_access_key_id,
+                                aws_secret_access_key=aws_secret_access_key,
+                                aws_region_name=AWS_REGION_NAME)
+    s3_commit_key = f'{repo_part}/{filename_part}'
+    cdn_s3_handler.put_contents(s3_commit_key, PDF_log_dict)
 
     return description
+# end of process_PDF_job function
 
 
 def job(queued_json_payload:Dict[str,Any]) -> None:
@@ -131,6 +168,7 @@ def job(queued_json_payload:Dict[str,Any]) -> None:
         but if the job throws an exception or times out (timeout specified in enqueue process)
             then the job gets added to the 'failed' queue.
     """
+    logger.info(f"{MY_NAME} v{MY_VERSION_STRING}")
     logger.debug("tX PDF JobHandler received a job" + (" (in debug mode)" if debug_mode_flag else ""))
     start_time = time()
     stats_client.incr(f'{job_handler_stats_prefix}.jobs.OBSPDF.attempted')

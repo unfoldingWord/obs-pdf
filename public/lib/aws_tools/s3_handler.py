@@ -42,7 +42,7 @@ class S3Handler:
             self.bucket = self.resource.Bucket(self.bucket_name)
 
 
-    def upload_file(self, path, key, cache_time=600, content_type=None):
+    def upload_file(self, path:str, key:str, cache_time=600, content_type=None):
         """
         Upload file to S3 storage. Similar to the s3.upload_file, however, that
         does not work nicely with moto, whereas this function does.
@@ -63,4 +63,17 @@ class S3Handler:
             CacheControl=f'max-age={cache_time}'
         )
 
+
+    def get_object(self, key:str):
+        return self.resource.Object(bucket_name=self.bucket_name, key=key)
+
+
+    def put_contents(self, key:str, body, catch_exception:bool=True):
+            if catch_exception:
+                try:
+                    return self.get_object(key).put(Body=body)
+                except:
+                    return None
+            else:
+                return self.get_object(key).put(Body=body)
 # end of S3Handler class
