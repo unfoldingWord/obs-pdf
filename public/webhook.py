@@ -17,6 +17,7 @@ from time import time
 import sys
 import traceback
 import logging
+from urllib.error import HTTPError
 
 # Library (PyPi) imports
 from rq import get_current_job, Queue
@@ -111,15 +112,22 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     repo_part = f'u/{repo_owner_username}/{repo_name}'
     filename_part = 'PDF-details.json'
     json_url = f'{base_download_url}/{repo_part}/{filename_part}'
-    logging.info(f"Checking for JSON build log at {json_url}…")
-    PDF_log_dict = json.loads(get_url(json_url))
-    logging.info(f"Got JSON build log = {PDF_log_dict}")
+    logger.info(f"Checking for JSON build log at {json_url}…")
+    try:
+        PDF_log_dict = json.loads(get_url(json_url))
+    except HTTPError as e:
+        logger.info(f"No existing build log to read: {e}")
+        PDF_log_dict = {}
+    except Exception as e:
+        logger.error()
+        PDF_log_dict = {f"Error when trying to read build log: {e}"}
+    logger.info(f"Got JSON build log = {PDF_log_dict}")
 
     if tag_or_branch_name not in PDF_log_dict: PDF_log_dict[tag_or_branch_name] = {}
     PDF_log_dict[tag_or_branch_name]['PDF_creator'] = MY_NAME
     PDF_log_dict[tag_or_branch_name]['PDF_creator_version'] = MY_VERSION_STRING
 
-    logging.debug(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
+    logger.debug(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
     try:
         with PdfFromDcs(prefix, parameter_type='username_repoName_spec', parameter=parameters) as f:
             upload_URL = f.run()
@@ -146,8 +154,8 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
 
     # Save (new/updated) JSON log file
     PDF_log_dict['processed_at'] = datetime.utcnow()
-    logging.info(f"Final build log = {PDF_log_dict}")
-    logging.info(f"Saving JSON build log to {json_url}…")
+    logger.info(f"Final build log = {PDF_log_dict}")
+    logger.info(f"Saving JSON build log to {json_url}…")
     cdn_s3_handler = S3Handler(bucket_name=f'{prefix}{CDN_BUCKET_NAME}',
                                 aws_access_key_id=aws_access_key_id,
                                 aws_secret_access_key=aws_secret_access_key,
