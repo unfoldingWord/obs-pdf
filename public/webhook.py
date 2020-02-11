@@ -36,7 +36,7 @@ from lib.pdf_from_dcs import PdfFromDcs
 
 # The following will be recording in the build log (JSON) file
 MY_NAME = 'ConTeXt OBS PDF creator'
-MY_VERSION_STRING = '1.00'
+MY_VERSION_STRING = '1.00' # Mostly to determine PDF fixes
 CDN_BUCKET_NAME = 'cdn.door43.org'
 AWS_REGION_NAME = 'us-west-2'
 
@@ -110,7 +110,7 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     # See if a JSON log file already exists
     base_download_url = f'https://s3-us-west-2.amazonaws.com/{prefix}cdn.door43.org'
     repo_part = f'u/{repo_owner_username}/{repo_name}'
-    filename_part = 'PDF-details.json'
+    filename_part = 'PDF_details.json'
     json_url = f'{base_download_url}/{repo_part}/{filename_part}'
     logger.info(f"Checking for JSON build log at {json_url}…")
     try:
@@ -126,16 +126,17 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     if tag_or_branch_name not in PDF_log_dict: PDF_log_dict[tag_or_branch_name] = {}
     PDF_log_dict[tag_or_branch_name]['PDF_creator'] = MY_NAME
     PDF_log_dict[tag_or_branch_name]['PDF_creator_version'] = MY_VERSION_STRING
+    PDF_log_dict[tag_or_branch_name]['source_url'] = payload['source']
 
     logger.debug(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
     try:
         with PdfFromDcs(prefix, parameter_type='username_repoName_spec', parameter=parameters) as f:
             upload_URL = f.run()
-            msg = f"PDF made and uploaded to {upload_URL}"
-            logger.info(msg)
+            logger.info(f"PDF made and uploaded to {upload_URL}")
             # Update JSON log file
             PDF_log_dict[tag_or_branch_name]['status'] = 'success'
-            PDF_log_dict[tag_or_branch_name]['message'] = msg
+            PDF_log_dict[tag_or_branch_name]['PDF_url'] = upload_URL
+            PDF_log_dict[tag_or_branch_name]['message'] = "PDF made and uploaded"
             if len(parameters) == 4:
                 PDF_log_dict[tag_or_branch_name]['commit_hash'] = parameters[3]
 
