@@ -141,6 +141,7 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
                 PDF_log_dict[tag_or_branch_name]['commit_hash'] = parameters[3]
 
     except ChildProcessError:
+        logger.critical(f"ConTeXt went wrong: {e}")
         err_text = 'AN ERROR OCCURRED GENERATING THE PDF\r\n\r\n'
         err_text += read_file(os.path.join(get_output_dir(), 'context.err'))
         err_text += '\r\n\r\n\r\nFULL ConTeXt OUTPUT\r\n\r\n'
@@ -150,6 +151,7 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
         PDF_log_dict[tag_or_branch_name]['message'] = "Error within ConTeXt PDF build system"
 
     except Exception as e:
+        logger.critical(f"Something went wrong: {e}")
         PDF_log_dict[tag_or_branch_name]['status'] = 'error'
         PDF_log_dict[tag_or_branch_name]['message'] = str(e)
 
