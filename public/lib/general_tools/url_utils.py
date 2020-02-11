@@ -5,7 +5,7 @@ import sys
 import urllib.request as urllib2
 
 
-def get_url(url, catch_exception=False):
+def get_url(url:str, catch_exception:bool=False):
     """
     :param str|unicode url: URL to open
     :param bool catch_exception: If <True> catches all exceptions and returns <False>
@@ -29,7 +29,7 @@ def get_url(url, catch_exception=False):
         return response
 
 
-def download_file(url, outfile):
+def download_file(url:str, outfile:str) -> None:
     """
     Downloads a file and saves it.
     """
@@ -44,7 +44,7 @@ def download_file(url, outfile):
         sys.exit(1)
 
 
-def get_languages():
+def get_languages() -> list:
     """
     Returns an array of over 7000 dictionaries
 
@@ -68,7 +68,7 @@ def get_languages():
     return json.loads(get_url(url))
 
 
-def get_catalog():
+def get_catalog() -> list:
     """
     Returns the api v3 catalog
     """
@@ -100,7 +100,7 @@ def join_url_parts(*args):
     return return_val
 
 
-def clean_url_segment(segment):
+def clean_url_segment(segment:str):
 
     if segment[-1:] == '/':
         return segment[:-1]
