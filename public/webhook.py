@@ -153,7 +153,7 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
         PDF_log_dict[tag_or_branch_name]['message'] = str(e)
 
     # Save (new/updated) JSON log file
-    PDF_log_dict['processed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    PDF_log_dict[tag_or_branch_name]['processed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     logger.info(f"Final build log = {PDF_log_dict}")
     log_filepath = f'/tmp/{filename_part}'
     write_file(log_filepath, PDF_log_dict)
@@ -225,12 +225,12 @@ def job(queued_json_payload:Dict[str,Any]) -> None:
     elapsed_milliseconds = round((time() - start_time) * 1000)
     stats_client.timing(f'{job_handler_stats_prefix}.job.OBSPDF.duration', elapsed_milliseconds)
     if elapsed_milliseconds < 2000:
-        logger.info(f"{prefix}tX job handling for {job_descriptive_name} completed in {elapsed_milliseconds:,} milliseconds.")
+        logger.info(f"{prefix}tX job handling for {job_descriptive_name} PDF completed in {elapsed_milliseconds:,} milliseconds.")
     else:
-        logger.info(f"{prefix}tX job handling for {job_descriptive_name} completed in {round(time() - start_time)} seconds.")
+        logger.info(f"{prefix}tX job handling for {job_descriptive_name} PDF completed in {round(time() - start_time)} seconds.")
 
     stats_client.incr(f'{job_handler_stats_prefix}.jobs.OBSPDF.completed')
     main_watchtower_log_handler.close() # Ensure queued logs are uploaded to AWS CloudWatch
 # end of job function
 
-# end of webhook.py for tX PDF Job Handler
+# end of webhook.py for tX OBS PDF Job Handler
