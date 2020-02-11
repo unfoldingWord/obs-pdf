@@ -62,18 +62,4 @@ class S3Handler:
             ContentType=content_type,
             CacheControl=f'max-age={cache_time}'
         )
-
-
-    def get_object(self, key:str):
-        return self.resource.Object(bucket_name=self.bucket_name, key=key)
-
-
-    def put_contents(self, key:str, body, catch_exception:bool=True):
-            if catch_exception:
-                try:
-                    return self.get_object(key).put(Body=body)
-                except:
-                    return None
-            else:
-                return self.get_object(key).put(Body=body)
 # end of S3Handler class

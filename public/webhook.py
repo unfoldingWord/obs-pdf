@@ -29,7 +29,7 @@ from watchtower import CloudWatchLogHandler # AWS CloudWatch log handler
 from rq_settings import prefix, debug_mode_flag, webhook_queue_name
 from lib.aws_tools.s3_handler import S3Handler
 from lib.general_tools.app_utils import get_output_dir
-from lib.general_tools.file_utils import read_file, empty_folder
+from lib.general_tools.file_utils import read_file, empty_folder, write_file
 from lib.general_tools.url_utils import get_url
 from lib.pdf_from_dcs import PdfFromDcs
 
@@ -121,7 +121,7 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     except Exception as e:
         logger.error()
         PDF_log_dict = {f"Error when trying to read build log: {e}"}
-    logger.info(f"Got JSON build log = {PDF_log_dict}")
+    logger.info(f"Got build log = {PDF_log_dict}")
 
     if tag_or_branch_name not in PDF_log_dict: PDF_log_dict[tag_or_branch_name] = {}
     PDF_log_dict[tag_or_branch_name]['PDF_creator'] = MY_NAME
@@ -153,15 +153,17 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
         PDF_log_dict[tag_or_branch_name]['message'] = str(e)
 
     # Save (new/updated) JSON log file
-    PDF_log_dict['processed_at'] = datetime.utcnow()
+    PDF_log_dict['processed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     logger.info(f"Final build log = {PDF_log_dict}")
+    log_filepath = f'/tmp/{filename_part}'
+    write_file(log_filepath, PDF_log_dict)
     logger.info(f"Saving JSON build log to {json_url}…")
     cdn_s3_handler = S3Handler(bucket_name=f'{prefix}{CDN_BUCKET_NAME}',
                                 aws_access_key_id=aws_access_key_id,
                                 aws_secret_access_key=aws_secret_access_key,
                                 aws_region_name=AWS_REGION_NAME)
     s3_commit_key = f'{repo_part}/{filename_part}'
-    cdn_s3_handler.put_contents(s3_commit_key, PDF_log_dict)
+    cdn_s3_handler.upload_file(log_filepath, s3_commit_key)
 
     return description
 # end of process_PDF_job function
