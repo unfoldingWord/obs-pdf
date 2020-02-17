@@ -1,6 +1,14 @@
-FROM tiangolo/uwsgi-nginx-flask:python3.6
-
-MAINTAINER DSM
+#FROM tiangolo/uwsgi-nginx-flask:python3.7 # OBSOLETE because we switched to RQ
+# See https://hub.docker.com/_/python/ for available packages
+# FROM python:3.7-slim-stretch
+# Brings in ConTeXt MkIV 2016.05
+#   but Python 3.7 is not natively compatible with pickle protocol v8
+#       see https://github.com/rq/rq/issues/1168
+#FROM python:3.8-slim-buster
+# Brings in ConTeXt MkIV 2018.04.04 which seems to have different syntax
+FROM unfoldingword/obs-stretch-base:latest
+# Brings in ConTeXt MkIV 2016.05
+#   but has Python 3.8.1
 
 # install packages, nodejs, and the OBS images
 RUN apt-get update \
@@ -29,10 +37,7 @@ RUN apt-get update \
     && mkdir -p /opt/obs/images \
     && mkdir -p /opt/obs/png \
     && mkdir -p /opt/obs/jpg \
-    && curl -sL https://cdn.unfoldingword.org/obs/jpg/obs-images-360px.zip -o /opt/obs/jpg/obs-images-360px.zip \
-    && curl -sL https://unfoldingword.org/assets/img/uW-Level-1-128px.png -o /opt/obs/png/uW-Level-1-128px.png \
-    && curl -sL https://unfoldingword.org/assets/img/uW-Level-2-128px.png -o /opt/obs/png/uW-Level-2-128px.png \
-    && curl -sL https://unfoldingword.org/assets/img/uW-Level-3-128px.png -o /opt/obs/png/uW-Level-3-128px.png \
-    && curl -sL https://cdn.door43.org/obs/jpg/uWOBSverticallogo1200w.png -o /opt/obs/png/uWOBSverticallogo1200w.png \
-    && curl -sL https://cdn.door43.org/obs/jpg/uWOBSverticallogo600w.png -o /opt/obs/png/uWOBSverticallogo600w.png \
-    && unzip /opt/obs/jpg/obs-images-360px.zip -d /opt/obs/jpg
+    && curl -sL https://filedn.com/lD0GfuMvTstXgqaJfpLL87S/obs/jpg/obs-images-360px.zip -o /opt/obs/jpg/obs-images-360px.zip \
+    && curl -sL https://cdn.door43.org/obs/png/uW_OBS_Logo.png -o /opt/obs/png/uW_OBS_Logo.png \
+    && unzip /opt/obs/jpg/obs-images-360px.zip -d /opt/obs/jpg \
+    && rm -v /opt/obs/jpg/obs-images-360px.zip

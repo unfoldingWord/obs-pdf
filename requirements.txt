@@ -1,4 +1,15 @@
-pyyaml==3.12
-regex==2018.6.9
-Flask==1.0.2
-uwsgi==2.0.17.1
+# For original Flask/UWSGI/NGINX app only
+# uwsgi==2.0.18
+
+# For new RQ app only
+statsd==3.3.0
+watchtower==0.7.3
+
+# Should eventually only need ONE of the following
+# Flask==1.1.1
+rq==1.2.0
+
+# Common for both
+pyyaml==5.3
+regex==2020.1.8
+boto3==1.10.49

@@ -9,3 +9,13 @@ __pycache__/
 /output/*
 /backup/*
 !.gitkeep
+
+.vscode
+.mypy_cache
+
+# Scripts
+setENVs.sh
+
+# Sonar
+.scannerwork/
+sonar-project.properties

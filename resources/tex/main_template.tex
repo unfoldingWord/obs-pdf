@@ -7,7 +7,7 @@
 \definepapersize [Trade][width=5.25in, height=8in]
 \setuppapersize [Trade][Trade]
 \setuppagenumbering [location={footer,middle}, conversion=numbers, alternative=doublesided,strut=yes,style=\normal]
-\mainlanguage[<<<[language]>>>]
+\mainlanguage[<<<[language_id]>>>]
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %New Simple Fonts for NotoSans
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -18,9 +18,9 @@
     \definefontfamily     [noto] [it] [NotoSans]
     \definefontfamily     [noto] [sl] [NotoSans]
     \definefontfamily     [noto] [mm] [NotoSans]
-    \doiffile{obs/tex/<<<[fontface]>>>-<<<[language]>>>.tex}{\input obs/tex/<<<[fontface]>>>-<<<[language]>>>.tex}
+    \doiffile{obs/tex/<<<[fontface]>>>-<<<[language_id]>>>.tex}{\input obs/tex/<<<[fontface]>>>-<<<[language_id]>>>.tex}
 \stoptypescript
-\input{obs/tex/<<<[fontface]>>>-<<<[language]>>>.tex}
+\input{obs/tex/<<<[fontface]>>>-<<<[language_id]>>>.tex}
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \usetypescript[<<<[fontface]>>>][uc]
 \setupalign[hanging]
@@ -78,14 +78,14 @@
 \define\EN{\textdir TLT}
 \overfullrule=2pt
 \starttext
-\doif{<<<[direction]>>>}{ltr}{
+\doif{<<<[language_direction]>>>}{ltr}{
 	\pagedir TLT
 	\bodydir TLT
 	\pardir TLT
 	\textdir TLT
 	\define\LangTextDir{\pardir TLT \textdir TLT}
 }
-\doif{<<<[direction]>>>}{rtl}{
+\doif{<<<[language_direction]>>>}{rtl}{
 	\pagedir TRT
 	\bodydir TRT
 	\pardir TRT
@@ -98,15 +98,14 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % The Front Matter
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\setupalign[flushleft,nothanging,hz,lesshyphenation,verytolerant,stretch]
+\setupalign[<<<[front_align]>>>,nothanging,hz,lesshyphenation,verytolerant,stretch]
 \emergencystretch=1.5em % plus 6.0em minus 0.01em
 \startfrontmatter % Intro material
     % Title and Logo Page
     \setupfooter [state=stop]
     \startmakeup[storytitle]
     \blank
-    % {\midaligned { \externalfigure[https://cdn.door43.org/obs/jpg/uWOBSverticallogo1200w.png] } }
-    {\midaligned { \externalfigure[/opt/obs/png/uWOBSverticallogo1200w.png] } }
+    ===TITLE.LOGO===
     \blank
     \stopmakeup
     % Copyright and License Page
@@ -117,15 +116,6 @@
     %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  START-OF-FRONT-MATTER (About)
     ===FRONT.MATTER.ABOUT===
     %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  END-OF-FRONT-MATTER (About)
-    \blank
-	{\pardir TLT \EN
-    \setuphanging[location=left]
-    % \starthanging{\externalfigure[https://unfoldingword.org/assets/img/uW-Level-<<<[checkinglevel]>>>-128px.png]}
-    \starthanging{\externalfigure[/opt/obs/png/uW-Level-<<<[checkinglevel]>>>-128px.png]}
-    {{\bf Checking level <<<[checkinglevel]>>>}\blank
-    { \em find out more at \goto{https://unfoldingword.org/quality}[url(https://unfoldingword.org/quality)]}}
-    \stophanging
-	}
     \blank[2em]
     %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  START-OF-FRONT-MATTER (License)
     ===FRONT.MATTER.LICENSE===
@@ -154,7 +144,7 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % The Body Matter
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\setupalign[<<<[bodyalign]>>>,nothanging,hz,lesshyphenation,verytolerant,stretch]
+\setupalign[<<<[body_align]>>>,nothanging,hz,lesshyphenation,verytolerant,stretch]
 \startbodymatter % The stories themselves
     \setuptolerance[vertical,verytolerant,stretch]
     %\enableregime[utf]
@@ -169,7 +159,7 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % The Back Matter
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\setupalign[<<<[backalign]>>>,nothanging,hz,lesshyphenation,verytolerant,stretch]
+\setupalign[<<<[back_align]>>>,nothanging,hz,lesshyphenation,verytolerant,stretch]
 \startbackmatter
     \setuptolerance[vertical,verytolerant,stretch]
     %\enableregime[utf]

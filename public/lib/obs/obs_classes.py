@@ -1,15 +1,17 @@
-import regex as re
+from typing import List, Optional
 from datetime import datetime
 import os
 from json import JSONEncoder
-from typing import List
+
+import regex as re
 
 from lib.general_tools.file_utils import load_json_object
 from lib.obs import chapters_and_frames
 
 
-class OBSStatus(object):
-    def __init__(self, file_name=None):
+
+class OBSStatus:
+    def __init__(self, file_name:Optional[str]=None) -> None:
         """
         Class constructor. Optionally accepts the name of a file to deserialize.
         :param str file_name: The name of a file to deserialize into a OBSStatus object
@@ -19,10 +21,10 @@ class OBSStatus(object):
             if os.path.isfile(file_name):
                 self.__dict__ = load_json_object(file_name)
             else:
-                raise IOError('The file {0} was not found.'.format(file_name))
+                raise IOError(f"The file '{file_name}' was not found.")
         else:
             self.checking_entity = ''
-            self.checking_level = '1'
+            # self.checking_level = '1'
             self.comments = ''
             self.contributors = ''
             self.publish_date = datetime.today().strftime('%Y-%m-%d')
@@ -30,8 +32,10 @@ class OBSStatus(object):
             self.source_text_version = ''
             self.version = ''
 
-    def __contains__(self, item):
+
+    def __contains__(self, item) -> bool:
         return item in self.__dict__
+
 
     @staticmethod
     def from_manifest(manifest):
@@ -40,7 +44,7 @@ class OBSStatus(object):
         manifest_status = manifest['status']
 
         status.checking_entity = ', '.join(manifest_status['checking_entity'])
-        status.checking_level = manifest_status['checking_level']
+        # status.checking_level = manifest_status['checking_level']
         status.comments = manifest_status['comments']
         status.contributors = ', '.join(manifest_status['contributors'])
         status.publish_date = manifest_status['pub_date']
@@ -51,27 +55,30 @@ class OBSStatus(object):
         return status
 
 
-class OBSChapter(object):
 
-    title_re = re.compile(r'^\s*#(.*?)#*\n', re.UNICODE)
-    ref_re = re.compile(r'\n(_*.*?_*)\n*$', re.UNICODE)
-    frame_re = re.compile(r'!\[OBS Image\].*?obs-en-(\d\d)-(\d\d)\.jpg.*?\)\n([^!]*)', re.UNICODE)
-    img_url = 'https://cdn.door43.org/obs/jpg/360px/obs-en-{0}.jpg'
+class OBSChapter:
 
-    def __init__(self, json_obj=None):
+    title_re = re.compile(r'^\s*#(.*?)#*\n')
+    ref_re = re.compile(r'\n(_*.*?_*)\n*$')
+    frame_re = re.compile(r'!\[OBS Image\].*?obs-en-(\d\d)-(\d\d)\.jpg.*?\)\n(.+?)(?=!\[|$)', re.DOTALL)
+    img_url_template = 'https://cdn.door43.org/obs/jpg/360px/obs-en-{0}.jpg'
+
+
+    def __init__(self, json_obj=None) -> None:
         """
         Class constructor. Optionally accepts an object for initialization.
         :param object json_obj: The name of a file to deserialize into a OBSStatus object
         """
         # deserialize
         if json_obj:
-            self.__dict__ = json_obj  # type: dict
+            self.__dict__:dict = json_obj
 
         else:
-            self.frames = []  # type: List[dict]
+            self.frames:List[dict] = []
             self.number = ''
             self.ref = ''
             self.title = ''
+
 
     def get_errors(self):
         """
@@ -81,12 +88,12 @@ class OBSChapter(object):
         errors = []
 
         if not self.title:
-            msg = 'Title not found: {0}'.format(self.number)
+            msg = f"Title not found: {self.number}"
             print(msg)
             errors.append(msg)
 
         if not self.ref:
-            msg = 'Ref not found: {0}'.format(self.number)
+            msg = f"Ref not found: {self.number}"
             print(msg)
             errors.append(msg)
 
@@ -98,37 +105,40 @@ class OBSChapter(object):
         for x in range(1, expected_frame_count + 1):
 
             # frame id is formatted like '01-01'
-            frame_id = '{0}-{1}'.format(self.number.zfill(2), str(x).zfill(2))
+            frame_id = f'{self.number.zfill(2)}-{str(x).zfill(2)}'
 
             # get the next frame
             frame = next((f for f in self.frames if f['id'] == frame_id), None)  # type: dict
             if not frame:
-                msg = 'Frame not found: {0}'.format(frame_id)
+                msg = f"Frame not found: {frame_id}"
                 print(msg)
                 errors.append(msg)
             else:
                 # check the frame img and  values
                 if 'img' not in frame or not frame['img']:
-                    msg = 'Attribute "img" is missing for frame {0}'.format(frame_id)
+                    msg = f'Attribute "img" is missing for frame {frame_id}'
                     print(msg)
                     errors.append(msg)
 
                 if 'text' not in frame or not frame['text']:
-                    msg = 'Attribute "text" is missing for frame {0}'.format(frame_id)
+                    msg = f'Attribute "text" is missing for frame {frame_id}'
                     print(msg)
                     errors.append(msg)
 
         return errors
 
+
     def __getitem__(self, item):
         if item in self.__dict__:
             return self.__dict__[item]
 
+
     def __str__(self):
         return self.__class__.__name__ + ' ' + self.number
 
+
     @staticmethod
-    def from_markdown(markdown, chapter_number):
+    def from_markdown(markdown: str, chapter_number: int) -> 'OBSChapter':
         """
 
         :param str|unicode markdown:
@@ -139,55 +149,55 @@ class OBSChapter(object):
         return_val = OBSChapter()
         return_val.number = str(chapter_number).zfill(2)
 
-        # remove Windows line endings
+        # Remove Windows line endings
         markdown = markdown.replace('\r\n', '\n')
 
-        # title: the first non-blank line is title if it starts with '#'
-        match = OBSChapter.title_re.search(markdown)
-        if match:
-            return_val.title = match.group(1).strip()
-            markdown = markdown.replace(match.group(0), str(''), 1)
 
-        # ref
-        match = OBSChapter.ref_re.search(markdown)
-        if match:
-            return_val.ref = match.group(1).strip()
-            markdown = markdown.replace(match.group(0), str(''), 1)
+        # Title: the first non-blank line is title if it starts with '#'
+        title_match = OBSChapter.title_re.search(markdown)
+        if title_match:
+            return_val.title = title_match.group(1).strip()
+            markdown = markdown.replace(title_match.group(0), str(''), 1)
 
-        # frames
-        for frame in OBSChapter.frame_re.finditer(markdown):
+        # Ref
+        ref_match = OBSChapter.ref_re.search(markdown)
+        if ref_match:
+            return_val.ref = ref_match.group(1).strip()
+            markdown = markdown.replace(ref_match.group(0), str(''), 1)
+
+        # Frames
+        for frame_match in OBSChapter.frame_re.finditer(markdown):
             # 1: chapter number
             # 2: frame number
             # 3: frame text
 
-            if int(frame.group(1)) != chapter_number:
-                raise Exception('Expected chapter {0} but found {1}.'.format(str(chapter_number), frame.group(1)))
+            if int(frame_match.group(1)) != chapter_number:
+                raise Exception(f"Expected chapter {chapter_number} but found '{frame_match.group(1)}'.")
 
-            frame_id = '{0}-{1}'.format(frame.group(1), frame.group(2))
-
+            frame_id = f'{frame_match.group(1)}-{frame_match.group(2)}'
             frame = {'id': frame_id,
-                     'img': OBSChapter.img_url.format(frame_id),
-                     'text': frame.group(3).strip()
-                     }
-
+                     'img': OBSChapter.img_url_template.format(frame_id),
+                     'text': frame_match.group(3).strip()
+                    }
             return_val.frames.append(frame)
 
         return return_val
 
 
-class OBS(object):
+
+class OBS:
 
     def __init__(self, file_name=None):
         """
         Class constructor. Optionally accepts the name of a file to deserialize.
         :param str file_name: The name of a file to deserialize into a OBS object
         """
-        # deserialize
+        # Deserialize
         if file_name:
             if os.path.isfile(file_name):
                 self.__dict__ = load_json_object(file_name)
             else:
-                raise IOError('The file {0} was not found.'.format(file_name))
+                raise IOError(f"The file '{file_name}' was not found.")
         else:
             self.app_words = dict(cancel='Cancel',
                                   chapters='Chapters',
@@ -202,14 +212,17 @@ class OBS(object):
                                   select_a_language='Select a Language')
             self.chapters = []
             self.date_modified = datetime.today().strftime('%Y%m%d')
-            self.direction = 'ltr'
-            self.language = ''
+            self.language_direction = 'ltr'
+            self.language_id = ''
+            self.language_name = ''
             self.title = ''
-            self.checking_level = ''
+            self.publisher = ''
+            # self.checking_level = ''
             self.version = ''
             self.status = ''
             self.front_matter = ''
             self.back_matter = ''
+
 
     def verify_all(self):
 
@@ -222,11 +235,13 @@ class OBS(object):
                 obs_chapter = OBSChapter(chapter)
             errors = errors + obs_chapter.get_errors()
 
-        if len(errors) == 0:
-            print('No errors were found in the OBS data.')
-            return True
-        else:
+        if errors:
+            print(f"Got ({len(errors)}) OBS errors: {errors}")
             return False
+        # else:
+        print('No errors were found in the OBS data.')
+        return True
+
 
 
 class OBSEncoder(JSONEncoder):
@@ -234,6 +249,6 @@ class OBSEncoder(JSONEncoder):
         return o.__dict__
 
 
+
 class OBSError(Exception):
-    def __init__(self, msg: str):
-        super().__init__(msg)
+    pass

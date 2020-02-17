@@ -10,6 +10,9 @@
 %%
 \setupbodyfont[<<<[fontface]>>>,<<<[fontstyle]>>>,<<<[bodysize]>>>]
 \setupinterlinespace[line=2.8ex,top=0.25,bottom=0.0]
+% This is the part that automatically emphasises (italics) story Bible references
+% TODO: Not sure why it doesn't work to disable em{} here and enable it in obs_tex_export.py
+%\setbox\reftry=\vbox{\vskip \the\refskip \tfx\the\reftxt}
 \setbox\reftry=\vbox{\vskip \the\refskip \tfx\em{{\the\reftxt}}}
 \refneed=\dimexpr \ht\reftry \relax
 \message{TRACE: MiscTare=\the\MiscTare, saveskip=\the\saveskip, savesize=\the\savesize, refneed=\the\refneed @}

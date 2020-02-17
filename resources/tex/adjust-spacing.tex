@@ -14,7 +14,7 @@
     \LastFontSZ=\the\useFontSZ
     \useFontSZ=\dimexpr \useFontSZ - 1.00pt \relax
     \useBaseSkip=\dimexpr \dimenProd{\dimenQuo{\useFontSZ}{\LastFontSZ}}{\useBaseSkip} \relax
-    \message{WARNING: Font size scaled-down to \the\useFontSZ, on page \the\pageno , in <<<[language]>>> version to fit both frames on the page@}
+    \message{WARNING: Font size scaled-down to \the\useFontSZ, on page \the\pageno , in <<<[language_id]>>> version to fit both frames on the page@}
 \else \ifdim \ScaleFactor > 2.0pt \relax
     \LastScaleFactor=100.0pt
     \iffalse
@@ -22,7 +22,7 @@
         %It is retired for Open Bible Stories but might be useful as an example for other projects
         \useBaseSkip=\dimexpr \dimenProd{\useBaseSkip}{2.0pt} \relax
         \message{NOTE: Baseline skip scaled-up from \the\saveskip , to \the\useBaseSkip , on page \the\pageno ,
-                 in <<<[language]>>> version due to scale-factor=\the\ScaleFactor > 2.0@}
+                 in <<<[language_id]>>> version due to scale-factor=\the\ScaleFactor > 2.0@}
     \fi
     \exitloop
 \else
@@ -32,7 +32,7 @@
         %It is retired for Open Bible Stories but might be useful as an example for other projects
         \useBaseSkip=\dimexpr \dimenProd{\useBaseSkip}{\ScaleFactor} \relax
         \message{NOTE: Baseline skip scaled-up from \the\saveskip , to \the\useBaseSkip , on page \the\pageno ,
-                 in <<<[language]>>> version due to scale-factor=\the\ScaleFactor > 1.0@}
+                 in <<<[language_id]>>> version due to scale-factor=\the\ScaleFactor > 1.0@}
     \fi
     \exitloop
 \fi \fi

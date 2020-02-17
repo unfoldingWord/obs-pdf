@@ -7,8 +7,8 @@ def get_app_root():
 
 
 def get_resources_dir():
-    return os.path.join(get_app_root(), 'resources')
+    return os.path.join(get_app_root(), 'resources/')
 
 
 def get_output_dir():
-    return os.path.join(get_app_root(), 'output')
+    return os.path.join(get_app_root(), 'output/')

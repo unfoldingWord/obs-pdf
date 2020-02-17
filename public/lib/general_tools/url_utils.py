@@ -1,11 +1,16 @@
+from typing import Callable
 from contextlib import closing
 import json
 import shutil
+import ssl
 import sys
 import urllib.request as urllib2
+from urllib.error import HTTPError
+import logging
+from time import sleep
 
 
-def get_url(url, catch_exception=False):
+def get_url(url:str, catch_exception:bool=False):
     """
     :param str|unicode url: URL to open
     :param bool catch_exception: If <True> catches all exceptions and returns <False>
@@ -29,22 +34,71 @@ def get_url(url, catch_exception=False):
         return response
 
 
-def download_file(url, outfile):
+# def download_file(url:str, outfile:str) -> None:
+#     """
+#     Downloads a file and saves it.
+#     """
+#     try:
+#         with closing(urllib2.urlopen(url)) as request:
+#             with open(outfile, 'wb') as fp:
+#                 shutil.copyfileobj(request, fp)
+
+#     except IOError as err:
+#         print('ERROR retrieving %s' % url)
+#         print(err)
+#         sys.exit(1)
+
+
+def download_file(url:str, outfile:str) -> None:
+    """Downloads a file and saves it."""
+    _download_file(url, outfile, urlopen=urllib2.urlopen)
+
+
+def _download_file(url:str, outfile:str, urlopen:Callable[[str],bytes]) -> None:
     """
-    Downloads a file and saves it.
+    Handles "HTTP Error 503: Service Unavailable" internally with an automatic wait and retry.
     """
-    try:
-        with closing(urllib2.urlopen(url)) as request:
-            with open(outfile, 'wb') as fp:
-                shutil.copyfileobj(request, fp)
+    logging.debug(f"_download_file( {url}, outfile={outfile}, …)…")
+    MAX_TRIES = 5
+    INITIAL_WAIT_TIME = 5 # seconds
+    num_tries = 0
+    while True:
+        num_tries += 1
+        if num_tries > 1:
+            logging.debug(f"  _download_file try #{num_tries}…")
+        need_to_wait = False
+        # err:Optional[Exception] = None
 
-    except IOError as err:
-        print('ERROR retrieving %s' % url)
-        print(err)
-        sys.exit(1)
+        try:
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            with closing(urlopen(url)) as request:
+                with open(outfile, 'wb') as fp:
+                    shutil.copyfileobj(request, fp)
+        except HTTPError as e:
+            if num_tries < MAX_TRIES \
+            and "HTTP Error 503: Service Unavailable" in str(e):
+                saved_e = e
+                need_to_wait = True
+            else:
+                raise e
+        except IOError as e:
+            error_message = f"Error retrieving {url}: {e}"
+            logging.critical(error_message)
+            raise IOError(error_message)
+        if not need_to_wait \
+        or num_tries >= MAX_TRIES:
+            break
+
+        adjusted_wait_time = INITIAL_WAIT_TIME * num_tries # Make the wait progressively longer
+        logging.warning(f"  _download_file: Waiting {adjusted_wait_time}s to fetch {url} after {saved_e}…")
+        sleep(adjusted_wait_time) # Then try again
+    # end of loop
+# end of _download_file function
 
 
-def get_languages():
+def get_languages() -> list:
     """
     Returns an array of over 7000 dictionaries
 
@@ -61,14 +115,14 @@ def get_languages():
         alt: ["Afaraf", "Danakil"],
         lc: aa
       },
-      ...
+      …
     ]
     """
     url = 'http://td.unfoldingword.org/exports/langnames.json'
     return json.loads(get_url(url))
 
 
-def get_catalog():
+def get_catalog() -> list:
     """
     Returns the api v3 catalog
     """
@@ -100,7 +154,7 @@ def join_url_parts(*args):
     return return_val
 
 
-def clean_url_segment(segment):
+def clean_url_segment(segment:str):
 
     if segment[-1:] == '/':
         return segment[:-1]
