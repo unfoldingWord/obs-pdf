@@ -196,6 +196,10 @@ def job(queued_json_payload:Dict[str,Any]) -> None:
     stats_client.gauge(f'{tx_stats_prefix}.enqueue-job.queue.OBSPDF.length.current', len_our_queue)
     logger.info(f"Updated stats for '{tx_stats_prefix}.enqueue-job.queue.OBSPDF.length.current' to {len_our_queue}")
 
+    # Save some stats
+    stats_client.incr(f"{job_handler_stats_prefix}.jobs.OBSPDF.input.{queued_json_payload['input_format']}")
+    stats_client.incr(f"{job_handler_stats_prefix}.jobs.OBSPDF.subject.{queued_json_payload['resource_type']}")
+
     try:
         job_descriptive_name = process_PDF_job(prefix, queued_json_payload)
     except Exception as e:
