@@ -206,7 +206,7 @@ class PdfFromDcs:
                 raise ValueError(err_msg)
 
             source_zip_url = found_sources[0]
-            tmp_source_dirpath = os.path.join(self.tmp_download_dirpath, f'{self.lang_code}_obs/')
+            tmp_source_dirpath = os.path.join(self.tmp_download_dirpath, f'{self.lang_code.lower()}_obs/')
 
         elif self.parameter_type == 'Door43_repo':
             source_zip_url = f'{DOOR43_SITE_URL}/{self.given_repo_spec}/archive/master.zip'
