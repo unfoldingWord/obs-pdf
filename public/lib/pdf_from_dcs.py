@@ -210,11 +210,11 @@ class PdfFromDcs:
 
         elif self.parameter_type == 'Door43_repo':
             source_zip_url = f'{DOOR43_SITE_URL}/{self.given_repo_spec}/archive/master.zip'
-            tmp_source_dirpath = os.path.join(self.tmp_download_dirpath, self.repo_name)
+            tmp_source_dirpath = os.path.join(self.tmp_download_dirpath, self.repo_name.lower())
 
         elif self.parameter_type == 'username_repoName_spec':
             source_zip_url = f'{DOOR43_SITE_URL}/{self.username}/{self.repo_name}/archive/{self.repo_spec}.zip'
-            tmp_source_dirpath = os.path.join(self.tmp_download_dirpath, self.repo_name)
+            tmp_source_dirpath = os.path.join(self.tmp_download_dirpath, self.repo_name.lower())
 
 
         # 2. Download source zip, then unzip
@@ -226,7 +226,7 @@ class PdfFromDcs:
         # 3. Check for valid repository structure
         manifest_filepath = os.path.join(tmp_source_dirpath, 'manifest.yaml')
         if not isfile(manifest_filepath):
-            err_msg = "Did not find manifest.yaml in the resource container"
+            err_msg = f"Did not find manifest.yaml in the resource container at {manifest_filepath}"
             self.output_msg(f"{datetime.datetime.now()} ERROR: {err_msg}\n")
             raise FileNotFoundError(err_msg)
 
