@@ -121,14 +121,14 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     except Exception as e:
         logger.error()
         PDF_log_dict = {f"Error when trying to read build log: {e}"}
-    logger.info(f"Got build log = {PDF_log_dict}")
+    logger.info(f"Got previous build log = {PDF_log_dict}")
 
     if tag_or_branch_name not in PDF_log_dict: PDF_log_dict[tag_or_branch_name] = {}
     PDF_log_dict[tag_or_branch_name]['PDF_creator'] = MY_NAME
     PDF_log_dict[tag_or_branch_name]['PDF_creator_version'] = MY_VERSION_STRING
     PDF_log_dict[tag_or_branch_name]['source_url'] = payload['source']
 
-    logger.debug(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
+    logger.info(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
     try:
         with PdfFromDcs(prefix, parameter_type='username_repoName_spec', parameter=parameters) as f:
             upload_URL = f.run()
@@ -160,13 +160,13 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     logger.info(f"Final build log = {PDF_log_dict}")
     log_filepath = f'/tmp/{filename_part}'
     write_file(log_filepath, PDF_log_dict)
-    logger.info(f"Saving JSON build log to {json_url}…")
+    logger.info(f"Saving JSON build log to {json_url} …")
     cdn_s3_handler = S3Handler(bucket_name=f'{prefix}{CDN_BUCKET_NAME}',
                                 aws_access_key_id=aws_access_key_id,
                                 aws_secret_access_key=aws_secret_access_key,
                                 aws_region_name=AWS_REGION_NAME)
     s3_commit_key = f'{repo_part}/{filename_part}'
-    cdn_s3_handler.upload_file(log_filepath, s3_commit_key)
+    cdn_s3_handler.upload_file(log_filepath, s3_commit_key, cache_time=2)
 
     return description
 # end of process_PDF_job function
@@ -195,6 +195,10 @@ def job(queued_json_payload:Dict[str,Any]) -> None:
     # logger.debug(f"Queue '{webhook_queue_name}' length={len_our_queue}")
     stats_client.gauge(f'{tx_stats_prefix}.enqueue-job.queue.OBSPDF.length.current', len_our_queue)
     logger.info(f"Updated stats for '{tx_stats_prefix}.enqueue-job.queue.OBSPDF.length.current' to {len_our_queue}")
+
+    # Save some stats
+    stats_client.incr(f"{job_handler_stats_prefix}.jobs.OBSPDF.input.{queued_json_payload['input_format']}")
+    stats_client.incr(f"{job_handler_stats_prefix}.jobs.OBSPDF.subject.{queued_json_payload['resource_type']}")
 
     try:
         job_descriptive_name = process_PDF_job(prefix, queued_json_payload)
