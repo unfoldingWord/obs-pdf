@@ -17,8 +17,10 @@ checkEnvVariables:
 		exit 1; \
 	fi
 
+# Add/Remove --no-cache as required
+
 baseStretchImage:
-	docker build --tag unfoldingword/obs-stretch-base:latest resources/docker-slim-python3.8-base/
+	docker build --no-cache --tag unfoldingword/obs-stretch-base:latest resources/docker-slim-python3.8-base/
 
 pushStretchBaseImage:
 	docker push unfoldingword/obs-stretch-base:latest
@@ -26,13 +28,13 @@ pushStretchBaseImage:
 runStretchBase:
 	docker run --name obs-stretch-base --detach --interactive --tty --cpus=1.0 --restart unless-stopped unfoldingword/obs-stretch-base:latest
 
-baseImage:
-	docker build --tag unfoldingword/obs-base:latest resources/docker-obs-base/
+baseOBSPDFImage:
+	docker build --no-cache --tag unfoldingword/obs-base:latest resources/docker-obs-base/
 
-runBase:
+runOBSPDFBase:
 	docker run --name obs-pdf-base --detach --interactive --tty --cpus=1.0 --restart unless-stopped unfoldingword/obs-base:latest
 
-pushBaseImage:
+pushOBSPDFBaseImage:
 	docker push unfoldingword/obs-base:latest
 
 mainImageDebug:
