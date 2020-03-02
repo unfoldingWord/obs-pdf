@@ -131,7 +131,7 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     PDF_log_dict[tag_or_branch_name]['source_url'] = payload['source']
     if optionsDict: PDF_log_dict[tag_or_branch_name]['options'] = payload['options']
 
-    logger.info(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
+    logger.info(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters}, {optionsDict})…")
     try:
         with PdfFromDcs(prefix, parameter_type='username_repoName_spec', parameter=parameters, options=optionsDict) as f:
             upload_URL = f.run()
