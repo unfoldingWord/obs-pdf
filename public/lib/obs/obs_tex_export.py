@@ -1,4 +1,5 @@
 # Python imports
+from typing import Dict, Optional
 import codecs
 import os
 import sys
@@ -105,10 +106,14 @@ class OBSTexExport:
     # endregion
 
 
-    def __init__(self, obs_obj:OBS, out_path:str, max_chapters:int, img_res:str) -> None:
+    def __init__(self, obs_obj:OBS, out_path:str, max_chapters:int, img_res:str, options:Optional[Dict[str,str]]=None) -> None:
         """
 
+        options is a optional dict of PDF options. Currently supported:
+            suppress_created_from
+            suppress_extended_description
         """
+        self.options = options
         self.language_id = obs_obj.language_id
         self.language_name = obs_obj.language_name
         self.language_direction = obs_obj.language_direction
@@ -524,7 +529,10 @@ class OBSTexExport:
     # end of export_chapters function
 
 
-    def run(self) -> None:
+    def create_tex_file(self) -> None:
+        """
+        Create the TeX file in self.outpath.
+        """
 
         relative_path_re = re.compile(r'([{ ])obs/tex/')
 
@@ -547,10 +555,14 @@ class OBSTexExport:
             output_front_license = ''.join(fm[1:])
         else:
             output_front_license = ''
-        # TODO: Do these strings need to be translated???
-        output_front_license += f"\n\nPDF created {datetime.date.today()} from {self.description}."
-        if self.extended_description: # Add an extra small line with more details like the commit hash
-            output_front_license += f"\n    \\tfxx{{(From {self.extended_description}.)}}"
+
+        suppress_created_from = 'suppress_created_from' in self.options and self.options['suppress_created_from']
+        if not suppress_created_from: # Add created date (and commit_hash)
+            # TODO: Do these strings need to be translated???
+            output_front_license += f"\n\nPDF created {datetime.date.today()} from {self.description}."
+            suppress_extended_description = 'suppress_extended_description' in self.options and self.options['suppress_extended_description']
+            if self.extended_description and not suppress_extended_description: # Add an extra small line with more details like the commit hash
+                output_front_license += f"\n    \\tfxx{{(From {self.extended_description}.)}}"
 
         output_back = self.export_matter(self.back_matter, test=False)
 
@@ -596,4 +608,4 @@ class OBSTexExport:
         write_file(self.out_path, full_output)
 
         sys.stdout = remember_out
-    # end of run()
+    # end of create_tex_file()

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional
 import codecs
 import datetime
 import re
@@ -34,7 +34,7 @@ class PdfFromDcs:
     Called from Flask after accepting payload.
     """
 
-    def __init__(self, prefix:str, parameter_type:str, parameter:Union[str,Tuple[str,str,str],Tuple[str,str,str,str]]) -> None:
+    def __init__(self, prefix:str, parameter_type:str, parameter:Union[str,Tuple[str,str,str],Tuple[str,str,str,str]], options:Optional[Dict[str,str]]=None) -> None:
         """
         prefix is '' or 'dev-'
 
@@ -46,6 +46,10 @@ class PdfFromDcs:
             'username_repoName_spec' where three or four parameters are given.
 
         parameter is the string value itself or a tuple with the three or four strings.
+
+        options is a optional dict of PDF options. Currently supported:
+            suppress_created_from
+            suppress_extended_description
         """
         assert prefix in ('','dev-')
         assert parameter_type in ('Catalog_lang_code','Door43_repo','username_repoName_spec')
@@ -54,6 +58,8 @@ class PdfFromDcs:
         self.prefix = prefix
         self.parameter_type = parameter_type
         self.parameter = parameter
+        self.options = options
+
         self.output_msgs = ''
         self.output_msg_filepath = '/tmp/last_output_msgs.txt'
 
@@ -319,8 +325,8 @@ class PdfFromDcs:
                 os.remove(tex_filepath) # make sure it doesn't already exist
 
             with OBSTexExport(obs_obj=obs_obj, out_path=tex_filepath,
-                                        max_chapters=0, img_res='360px') as tex:
-                tex.run()
+                                        max_chapters=0, img_res='360px', options=self.options) as tex:
+                tex.create_tex_file()
 
             # Run ConTeXt
             self.output_msg(f"{datetime.datetime.now()} => Preparing to run ConTeXt…\n")

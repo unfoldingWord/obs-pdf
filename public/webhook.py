@@ -36,7 +36,8 @@ from lib.pdf_from_dcs import PdfFromDcs
 
 # The following will be recording in the build log (JSON) file
 MY_NAME = 'ConTeXt OBS PDF creator'
-MY_VERSION_STRING = '1.00' # Mostly to determine PDF fixes
+MY_VERSION_STRING = '1.01' # Mostly to determine PDF fixes
+MY_NAME_VERSION_STRING = f"{MY_NAME} v{MY_VERSION_STRING}"
 CDN_BUCKET_NAME = 'cdn.door43.org'
 AWS_REGION_NAME = 'us-west-2'
 
@@ -107,6 +108,8 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
 
     repo_owner_username, repo_name, tag_or_branch_name = parameters[:3]
 
+    optionsDict:Dict[str,str] = payload['options'] if 'options' in payload else {}
+
     # See if a JSON log file already exists
     base_download_url = f'https://s3-us-west-2.amazonaws.com/{prefix}cdn.door43.org'
     repo_part = f'u/{repo_owner_username}/{repo_name}'
@@ -127,10 +130,11 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
     PDF_log_dict[tag_or_branch_name]['PDF_creator'] = MY_NAME
     PDF_log_dict[tag_or_branch_name]['PDF_creator_version'] = MY_VERSION_STRING
     PDF_log_dict[tag_or_branch_name]['source_url'] = payload['source']
+    if optionsDict: PDF_log_dict[tag_or_branch_name]['options'] = payload['options']
 
-    logger.info(f"Calling PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters})…")
+    logger.info(f"Calling v{MY_VERSION_STRING} PdfFromDcs('{prefix}', 'username_repoName_spec', {parameters}, {optionsDict})…")
     try:
-        with PdfFromDcs(prefix, parameter_type='username_repoName_spec', parameter=parameters) as f:
+        with PdfFromDcs(prefix, parameter_type='username_repoName_spec', parameter=parameters, options=optionsDict) as f:
             upload_URL = f.run()
             logger.info(f"PDF made and uploaded to {upload_URL}")
             # Update JSON log file
@@ -181,7 +185,7 @@ def job(queued_json_payload:Dict[str,Any]) -> None:
         but if the job throws an exception or times out (timeout specified in enqueue process)
             then the job gets added to the 'failed' queue.
     """
-    logger.info(f"{MY_NAME} v{MY_VERSION_STRING}")
+    logger.info(MY_NAME_VERSION_STRING)
     logger.debug("tX PDF JobHandler received a job" + (" (in debug mode)" if debug_mode_flag else ""))
     start_time = time()
     stats_client.incr(f'{job_handler_stats_prefix}.jobs.OBSPDF.attempted')
