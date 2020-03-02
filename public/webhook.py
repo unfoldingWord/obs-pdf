@@ -108,7 +108,7 @@ def process_PDF_job(prefix:str, payload:Dict[str,Any]) -> str:
 
     repo_owner_username, repo_name, tag_or_branch_name = parameters[:3]
 
-    optionsDict:Dict[str,str] = {payload['options']} if 'options' in payload else {}
+    optionsDict:Dict[str,str] = payload['options'] if 'options' in payload else {}
 
     # See if a JSON log file already exists
     base_download_url = f'https://s3-us-west-2.amazonaws.com/{prefix}cdn.door43.org'
