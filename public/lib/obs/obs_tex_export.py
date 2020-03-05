@@ -110,7 +110,7 @@ class OBSTexExport:
         """
 
         options is a optional dict of PDF options. Currently supported:
-            suppress_created_from
+            suppress_created_from_line
             suppress_extended_description
         """
         self.options = options
@@ -556,8 +556,8 @@ class OBSTexExport:
         else:
             output_front_license = ''
 
-        suppress_created_from = 'suppress_created_from' in self.options and self.options['suppress_created_from']
-        if not suppress_created_from: # Add created date (and commit_hash)
+        suppress_created_from_line = 'suppress_created_from_line' in self.options and self.options['suppress_created_from_line']
+        if not suppress_created_from_line: # Add created date (and commit_hash)
             # TODO: Do these strings need to be translated???
             output_front_license += f"\n\nPDF created {datetime.date.today()} from {self.description}."
             suppress_extended_description = 'suppress_extended_description' in self.options and self.options['suppress_extended_description']
