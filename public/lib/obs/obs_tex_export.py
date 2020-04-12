@@ -247,7 +247,7 @@ class OBSTexExport:
 
     @staticmethod
     def get_image(xtr:str, fid:str, res:str) -> str:
-        img_link = join_url_parts(OBSTexExport.api_url_jpg, res, f'obs-{fid}.jpg')
+        img_link = join_url_parts(OBSTexExport.api_url_jpg, res, f'obs-en-{fid}.jpg')
         return xtr + xtr + xtr + '{{\\externalfigure[{0}][yscale={1}]}}'.format(img_link, 950)  # 950 = 95%
 
 
