@@ -247,7 +247,7 @@ class OBSTexExport:
 
     @staticmethod
     def get_image(xtr:str, fid:str, res:str) -> str:
-        img_link = join_url_parts(OBSTexExport.api_url_jpg, res, f'obs-{fid}.jpg')
+        img_link = join_url_parts(OBSTexExport.api_url_jpg, res, f'obs-en-{fid}.jpg')
         return xtr + xtr + xtr + '{{\\externalfigure[{0}][yscale={1}]}}'.format(img_link, 950)  # 950 = 95%
 
 
@@ -556,11 +556,11 @@ class OBSTexExport:
         else:
             output_front_license = ''
 
-        suppress_created_from_line = 'suppress_created_from_line' in self.options and self.options['suppress_created_from_line']
+        suppress_created_from_line = self.options and 'suppress_created_from_line' in self.options and self.options['suppress_created_from_line']
         if not suppress_created_from_line: # Add created date (and commit_hash)
             # TODO: Do these strings need to be translated???
             output_front_license += f"\n\nPDF created {datetime.date.today()} from {self.description}."
-            suppress_extended_description = 'suppress_extended_description' in self.options and self.options['suppress_extended_description']
+            suppress_extended_description = self.options and 'suppress_extended_description' in self.options and self.options['suppress_extended_description']
             if self.extended_description and not suppress_extended_description: # Add an extra small line with more details like the commit hash
                 output_front_license += f"\n    \\tfxx{{(From {self.extended_description}.)}}"
 

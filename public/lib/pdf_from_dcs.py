@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import time
 import os
-from os.path import isfile, isdir
+from os.path import isfile, isdir, getsize
 import traceback
 
 from lib.general_tools.app_utils import get_output_dir, get_resources_dir
@@ -386,9 +386,7 @@ class PdfFromDcs:
             err_msg = f"Exception in create_and_upload_pdf: {e}: {traceback.format_exc()}\n"
             print(f"ERROR: {err_msg}")
             self.output_msg(err_msg)
-            # raise e
             err_msg = f"Supressing exception\n"
-            # print(f"ERROR: {err_msg}")
             self.output_msg(err_msg)
             have_exception = e
 
@@ -397,31 +395,21 @@ class PdfFromDcs:
             # with open(, 'wt') as log_output_file:
                 # log_output_file.write(self.output)
 
-        # PDF file is in out_dirpath
+        # Created PDF file is in out_dirpath
         pdf_current_filepath = os.path.join(out_dirpath, f'{obs_language_id}.pdf')
         self.output_msg(f"{datetime.datetime.now()} => Finding PDF at {pdf_current_filepath}…\n")
-        # version = obs_obj.version.replace('.', '_')
-        # if version[0:1] != 'v':
-        #     version = f'v{version}'
-        # # TODO: We might want to adjust this once things become more final
-        # if self.parameter_type == 'Catalog_lang_code':
-        #     pdf_desired_name = f'Door43-Catalog--{obs_language_id}_obs--{version}.pdf'
-        # elif self.parameter_type == 'Door43_repo':
-        #     pdf_desired_name = f'{self.username}--{self.repo_name}--{version}.pdf'
-        # elif self.parameter_type == 'username_repoName_spec':
-        #     pdf_desired_name = f'{self.username}--{self.repo_name}--{self.repo_spec}.pdf'
-        pdf_desired_name = f'{self.filename_bit}.pdf'
 
-        # Copy the new PDF file to the /app/obs-pdf/output/{obs_lang_code}/ folder
-        # self.output_msg(f"{datetime.datetime.now()} => Copying the '{obs_lang_code}' PDF file to output directory…\n")
-        # output_dir = os.path.join(get_output_dir(), obs_lang_code)
-        # if not isdir(output_dir):
-        #     make_dir(output_dir, linux_mode=0o777, error_if_not_writable=True)
-        # pdf_destination_filepath = os.path.join(output_dir, pdf_desired_name)
-        # self.output_msg(f"  Copying {pdf_current_filepath} to {pdf_destination_filepath}…\n")
-        # shutil.copyfile(pdf_current_filepath, pdf_destination_filepath)
+        # Check the PDF size (double-check that we succeeded -- fails if pictures are missing from file)
+        PDF_filesize = getsize(pdf_current_filepath)
+        self.output_msg(f"    PDF_filesize = {PDF_filesize:,} bytes\n")
+        if PDF_filesize < 1_000_000: # Should be MB not just KB
+            err_msg = f"Created PDF is too small: Only {PDF_filesize:,} bytes!\n"
+            print(f"ERROR: {err_msg}")
+            self.output_msg(err_msg)
+            have_exception = err_msg
 
         # Upload the PDF to our AWS S3 bucket
+        pdf_desired_name = f'{self.filename_bit}.pdf'
         self.output_msg(f"{datetime.datetime.now()} => Uploading '{pdf_desired_name}' to S3 {self.prefixed_bucket_name}/{self.cdn_folder}…\n")
         cdn_s3_handler = S3Handler(bucket_name=self.prefixed_bucket_name,
                                     aws_access_key_id=self.aws_access_key_id,
@@ -435,7 +423,6 @@ class PdfFromDcs:
         if have_exception is None:
             return f'https://{self.prefixed_bucket_name}/{s3_commit_key}'
         return str(have_exception)
-        # raise have_exception
     # end of PdfFromDcs.create_and_upload_pdf function
 
 

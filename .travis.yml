@@ -4,12 +4,13 @@
 #   DOCKER_USERNAME
 #   DOCKER_PASSWORD
 
-dist: bionic
 language: python
+os: linux
+dist: bionic
 # See available versions at https://docs.travis-ci.com/user/languages/python/
 python:
   - '3.8'
-  # - 'nightly'
+  - 'nightly'
 # NOTE: We only deploy on ONE of these tests being successful -- see condition below
 
 services:
