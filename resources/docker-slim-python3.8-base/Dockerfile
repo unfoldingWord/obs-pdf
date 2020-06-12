@@ -2,7 +2,7 @@
 # NOTE: THIS DOCKERFILE was downloaded from https://raw.githubusercontent.com/docker-library/python/master/3.8/buster/slim/Dockerfile
 #			on 15Jan2020
 #
-# Changed buster to stretch to create Debian Stretch slim image with Python 3.8.1
+# Changed buster to stretch to create Debian Stretch slim image with Python 3.8.3
 #	so more compatible with modern pickle protocols (used by RQ)
 #
 
@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV GPG_KEY E3FF2839C048B25C084DEBE9B26995E310250568
-ENV PYTHON_VERSION 3.8.1
+ENV PYTHON_VERSION 3.8.3
 
 RUN set -ex \
 	\
@@ -106,10 +106,10 @@ RUN cd /usr/local/bin \
 	&& ln -s python3-config python-config
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 19.3.1
+ENV PYTHON_PIP_VERSION 20.1.1
 # https://github.com/pypa/get-pip
-ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/ffe826207a010164265d9cc807978e3604d18ca0/get-pip.py
-ENV PYTHON_GET_PIP_SHA256 b86f36cc4345ae87bfd4f10ef6b2dbfa7a872fbff70608a1e43944d283fd0eee
+ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/eff16c878c7fd6b688b9b4c4267695cf1a0bf01b/get-pip.py
+ENV PYTHON_GET_PIP_SHA256 b3153ec0cf7b7bbf9556932aa37e4981c35dc2a2c501d70d91d2795aa532be79
 
 RUN set -ex; \
 	\
