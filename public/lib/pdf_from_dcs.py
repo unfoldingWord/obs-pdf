@@ -90,7 +90,8 @@ class PdfFromDcs:
             elif len(parameter) == 4:
                 self.username, self.repo_name, self.repo_spec, self.commit_hash = parameter
                 self.description = f'{self.username}/{self.repo_name}'
-                self.extended_description = f'{self.repo_spec}--{self.commit_hash}'
+                self.extended_description = self.repo_spec if self.repo_spec==self.commit_hash \
+                                            else f'{self.repo_spec}--{self.commit_hash}'
                 self.filename_bit = f'{self.username}--{self.repo_name}--{self.repo_spec}'
             self.cdn_folder = f'u/{self.username}/{self.repo_name}/{self.repo_spec}'
         else:
