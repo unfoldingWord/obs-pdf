@@ -36,7 +36,7 @@ from lib.pdf_from_dcs import PdfFromDcs
 
 # The following will be recording in the build log (JSON) file
 MY_NAME = 'ConTeXt OBS PDF creator'
-MY_VERSION_STRING = '1.01' # Mostly to determine PDF fixes
+MY_VERSION_STRING = '1.02' # Mostly to determine PDF fixes
 MY_NAME_VERSION_STRING = f"{MY_NAME} v{MY_VERSION_STRING}"
 CDN_BUCKET_NAME = 'cdn.door43.org'
 AWS_REGION_NAME = 'us-west-2'
