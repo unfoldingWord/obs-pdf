@@ -43,7 +43,7 @@ class PdfFromDcs:
             or
             'Door43_repo' where a repo username/repoName is given
             or
-            'username_repoName_spec' where three or four parameters are given.
+            'username, repoName, spec, commitHash' where three or four parameters are given -- commitHash is optional.
 
         parameter is the string value itself or a tuple with the three or four strings.
 
@@ -90,7 +90,8 @@ class PdfFromDcs:
             elif len(parameter) == 4:
                 self.username, self.repo_name, self.repo_spec, self.commit_hash = parameter
                 self.description = f'{self.username}/{self.repo_name}'
-                self.extended_description = f'{self.repo_spec}--{self.commit_hash}'
+                self.extended_description = self.repo_spec if self.repo_spec==self.commit_hash \
+                                            else f'{self.repo_spec}--{self.commit_hash}'
                 self.filename_bit = f'{self.username}--{self.repo_name}--{self.repo_spec}'
             self.cdn_folder = f'u/{self.username}/{self.repo_name}/{self.repo_spec}'
         else:

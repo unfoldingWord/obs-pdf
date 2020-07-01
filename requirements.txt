@@ -3,13 +3,13 @@
 
 # For new RQ app only
 statsd==3.3.0
-watchtower==0.7.3
+watchtower==0.8.0
 
 # Should eventually only need ONE of the following
 # Flask==1.1.1
-rq==1.4.2
+rq==1.4.3
 
 # Common for both
 pyyaml==5.3.1
 regex==2020.6.8
-boto3==1.14.1
+boto3==1.14.13
