@@ -43,7 +43,7 @@ class PdfFromDcs:
             or
             'Door43_repo' where a repo username/repoName is given
             or
-            'username_repoName_spec' where three or four parameters are given.
+            'username, repoName, spec, commitHash' where three or four parameters are given -- commitHash is optional.
 
         parameter is the string value itself or a tuple with the three or four strings.
 
