@@ -10,15 +10,16 @@ develop:
 
 ## PDF Generator for OBS
 
-### NOTE: Python 3 Only
-
 ### NOTE: This project is designed so that it can generate a Docker container which serves the application by responding to a RQ queue
 
-NOT FINISHED YET
 
 ## Container Structure
 
-The docker container was split into 2 so that the Python code could be updated without requiring the large number of image files to be updated also. This greatly reduced the time required to build and deploy the container.
+We make our own base container from Debian Stretch with an older version of ConTeXt
+(in order to stay compatible with the existing code), yet with a more modern Python3
+version (in order to be compatible with up-to-date RQ clients).
+
+The OBS-PDF docker container was split into 2 so that the Python code could be updated without requiring the large number of image files to be updated also. This greatly reduced the time required to build and deploy the container.
 
 ## Running on AWS EC2
 
