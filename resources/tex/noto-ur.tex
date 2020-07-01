@@ -1,6 +1,15 @@
-\definefontfeature [arabicFEA] [mode=node,language=dflt,script=arab,init=yes,medi=yes,fina=yes,isol=yes,calt=yes,rlig=yes,tlig=yes,trep=yes,curs=yes,kern=yes,mark=yes]
-\definefallbackfamily [noto] [ss] [Jameel Noori Nastaleeq] [range=arabic,features=arabicFEA]
-\definefallbackfamily [noto] [rm] [Jameel Noori Nastaleeq] [range=arabic,features=arabicFEA]
-\definefallbackfamily [noto] [it] [Jameel Noori Nastaleeq] [range=arabic,features=arabicFEA,slanted]
-\definefallbackfamily [noto] [sl] [Jameel Noori Nastaleeq] [range=arabic,features=arabicFEA,slanted]
-\definefallbackfamily [noto] [mm] [Jameel Noori Nastaleeq] [range=arabic,features=arabicFEA]
+% The following doesn't seem to work great (if at all)
+% \definefontfeature [arabicFEA] [mode=node,language=dflt,script=arab,init=yes,medi=yes,fina=yes,isol=yes,calt=yes,rlig=yes,tlig=yes,trep=yes,curs=yes,kern=yes,mark=yes]
+% \definefallbackfamily [noto] [ss] [Jameel Noori Nastaleeq] [range=arabic,features=arabicFEA]
+% \definefallbackfamily [noto] [rm] [Jameel Noori Nastaleeq] [range=arabic,features=arabicFEA]
+% \definefallbackfamily [noto] [it] [Jameel Noori Nastaleeq] [range=arabic,features=arabicFEA,slanted]
+% \definefallbackfamily [noto] [sl] [Jameel Noori Nastaleeq] [range=arabic,features=arabicFEA,slanted]
+% \definefallbackfamily [noto] [mm] [Jameel Noori Nastaleeq] [range=arabic,features=arabicFEA]
+
+% Adapted from noto-kn.tex
+%  and modified according to https://en.wikipedia.org/wiki/Urdu_script#Unicode
+%  and https://www.google.com/get/noto/#sans-arab
+\definefallbackfamily [noto] [rm] [NotoSansArabic] [range=0x0600-0x06FF]
+\definefallbackfamily [noto] [ss] [NotoSansArabic] [range=0x0600-0x06FF]
+\definefallbackfamily [noto] [sl] [NotoSansArabic] [range=0x0600-0x06FF]
+\definefallbackfamily [noto] [it] [NotoSansArabic] [range=0x0600-0x06FF]
