@@ -67,7 +67,7 @@ runDev: checkEnvVariables
 runDevDebug: checkEnvVariables
 	# After this, inside the container, run these commands to start the application:
 	#	cd /
-	#	./start_RqApp.sh
+	#	./start_RqApp_named.sh
 	# or
 	#	./test_en.sh
 	#
