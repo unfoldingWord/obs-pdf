@@ -30,7 +30,7 @@ The smallest EC2 instance I was able to get it to run on successfully is `t3.sma
 This is the command line used to start the Docker container on the EC2 instance:
 
 ```bash
-docker run --name obs-pdf -p 8080:80 -dit --cpus=1.0 --restart unless-stopped unfoldingWord/obs-pdf:master
+docker run --name obs-pdf -p 8080:80 -dit --cpus=1.0 --restart unless-stopped unfoldingword/obs-pdf:master
 ```
 
 ### Development
@@ -38,7 +38,7 @@ docker run --name obs-pdf -p 8080:80 -dit --cpus=1.0 --restart unless-stopped un
 For testing and debugging, start the Docker container with this command:
 
 ```bash
-docker run --name obs-pdf --rm -p 8080:80 -it --cpus=0.5 unfoldingWord/obs-pdf:develop bash
+docker run --name obs-pdf --rm -p 8080:80 -it --cpus=0.5 unfoldingword/obs-pdf:develop bash
 ```
 
 ### Debugging
@@ -46,7 +46,7 @@ docker run --name obs-pdf --rm -p 8080:80 -it --cpus=0.5 unfoldingWord/obs-pdf:d
 For testing and debugging, start the Docker container with this command:
 
 ```bash
-docker run --name obs-pdf --rm -p 8080:80 -it --cpus=0.5 unfoldingWord/obs-pdf:debug bash
+docker run --name obs-pdf --rm -p 8080:80 -it --cpus=0.5 unfoldingword/obs-pdf:debug bash
 ```
 
 Then, inside the container, run these commands to start the application:
