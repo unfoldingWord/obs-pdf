@@ -10,6 +10,6 @@ watchtower==0.8.0
 rq==1.4.3
 
 # Common for both
-pyyaml==5.3.1
+pyyaml==5.4
 regex==2020.6.8
 boto3==1.14.13
